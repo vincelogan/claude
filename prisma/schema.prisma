@@ -1,0 +1,452 @@
+// =============================================================================
+// Schema Prisma — Plataforma de Gestão de Processos Jurídicos
+// Escritório: Donnici Advogados
+//
+// v1: cadastro de processos/clientes + controle de prazos/agenda
+// Stack: Prisma + PostgreSQL
+// Integrações planejadas: PJe, eSAJ, Projudi, eProc, Google Calendar/Gmail
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+/// Perfis de acesso dos usuários do sistema.
+enum PerfilUsuario {
+  ADMIN
+  ADVOGADO
+  ESTAGIARIO
+  SECRETARIA
+}
+
+/// Pessoa Física ou Jurídica.
+enum TipoPessoa {
+  PF
+  PJ
+}
+
+/// Áreas jurídicas para classificação de assuntos/processos.
+enum AreaJuridica {
+  CIVEL
+  TRABALHISTA
+  CRIMINAL
+  TRIBUTARIO
+  PREVIDENCIARIO
+  EMPRESARIAL
+  FAMILIA
+  CONSUMIDOR
+  ADMINISTRATIVO
+  OUTRO
+}
+
+/// Esfera do tribunal.
+enum EsferaTribunal {
+  ESTADUAL
+  FEDERAL
+  TRABALHISTA
+  ELEITORAL
+  MILITAR
+  SUPERIOR
+}
+
+/// Sistemas processuais dos tribunais brasileiros (para integração).
+enum SistemaTribunal {
+  PJE
+  ESAJ
+  PROJUDI
+  EPROC
+  OUTRO
+}
+
+/// Tipo do processo.
+enum TipoProcesso {
+  JUDICIAL
+  ADMINISTRATIVO
+  EXTRAJUDICIAL
+}
+
+/// Fase processual atual.
+enum FaseProcesso {
+  PRE_PROCESSUAL
+  CONHECIMENTO
+  RECURSAL
+  EXECUCAO
+  CUMPRIMENTO_SENTENCA
+  ARQUIVADO
+}
+
+/// Status operacional do processo.
+enum StatusProcesso {
+  ATIVO
+  SUSPENSO
+  ARQUIVADO
+  BAIXADO
+  ENCERRADO
+}
+
+/// Polo da parte no processo.
+enum PoloParte {
+  ATIVO
+  PASSIVO
+  TERCEIRO
+  OUTRO
+}
+
+/// Papel específico da parte.
+enum TipoParte {
+  PARTE_PRINCIPAL
+  ADVOGADO_CONTRARIO
+  TERCEIRO_INTERESSADO
+  TESTEMUNHA
+  PERITO
+}
+
+/// Tipos de movimentação processual.
+enum TipoMovimentacao {
+  MANUAL
+  PUBLICACAO
+  DESPACHO
+  DECISAO
+  SENTENCA
+  ACORDAO
+  PETICAO
+  JUNTADA
+  OUTRO
+}
+
+/// Status de um prazo.
+enum StatusPrazo {
+  PENDENTE
+  CUMPRIDO
+  PRORROGADO
+  PERDIDO
+  CANCELADO
+}
+
+/// Tipos de audiência.
+enum TipoAudiencia {
+  CONCILIACAO
+  INSTRUCAO
+  JULGAMENTO
+  UNA
+  CUSTODIA
+  ARBITRAL
+  OUTRA
+}
+
+/// Status de uma audiência.
+enum StatusAudiencia {
+  AGENDADA
+  REALIZADA
+  ADIADA
+  CANCELADA
+}
+
+// =============================================================================
+// MODELS
+// =============================================================================
+
+/// Usuário do sistema (advogados, estagiários, secretaria, admin).
+/// Cada usuário pode ser responsável por processos, prazos e audiências,
+/// além de manter integrações próprias com tribunais e Google.
+model Usuario {
+  id         String        @id @default(cuid())
+  nome       String
+  email      String        @unique
+  senhaHash  String
+  oab        String?
+  oabUf      String?       @db.Char(2)
+  perfil     PerfilUsuario
+  ativo      Boolean       @default(true)
+  criadoEm   DateTime      @default(now())
+  atualizadoEm DateTime    @updatedAt
+
+  // Relações
+  processosResponsavel ProcessoResponsavel[]
+  prazosResponsavel    Prazo[]               @relation("PrazoResponsavel")
+  audienciasResponsavel Audiencia[]          @relation("AudienciaResponsavel")
+  movimentacoesCriadas Movimentacao[]        @relation("MovimentacaoCriadaPor")
+  integracoesTribunal  IntegracaoTribunal[]
+  integracaoGoogle     IntegracaoGoogle?
+
+  @@map("usuarios")
+}
+
+/// Cliente do escritório (Pessoa Física ou Jurídica).
+/// Pode figurar como parte em múltiplos processos.
+model Cliente {
+  id           String     @id @default(cuid())
+  tipoPessoa   TipoPessoa
+  nome         String
+  cpfCnpj      String     @unique
+  rg           String?
+  email        String?
+  telefone     String?
+  endereco     String?
+  cep          String?
+  cidade       String?
+  uf           String?    @db.Char(2)
+  observacoes  String?    @db.Text
+  ativo        Boolean    @default(true)
+  criadoEm     DateTime   @default(now())
+  atualizadoEm DateTime   @updatedAt
+
+  // Relações
+  partes Parte[]
+
+  @@index([nome])
+  @@map("clientes")
+}
+
+/// Assunto jurídico (taxonomia CNJ). Hierárquico via auto-relação (paiId).
+/// Ex.: "Direito Civil > Obrigações > Inadimplemento".
+model Assunto {
+  id          String       @id @default(cuid())
+  codigoCnj   String?      @unique
+  nome        String
+  area        AreaJuridica
+  paiId       String?
+
+  // Auto-relação hierárquica
+  pai     Assunto?  @relation("AssuntoHierarquia", fields: [paiId], references: [id], onDelete: SetNull)
+  filhos  Assunto[] @relation("AssuntoHierarquia")
+
+  // Relações
+  processos Processo[]
+
+  @@map("assuntos")
+}
+
+/// Tribunal (TJSP, TRT2, TRF3, STJ, etc.). Define a esfera e o sistema
+/// processual usado, base para integração automatizada.
+model Tribunal {
+  id      String          @id @default(cuid())
+  sigla   String          @unique
+  nome    String
+  esfera  EsferaTribunal
+  sistema SistemaTribunal
+  uf      String?         @db.Char(2)
+
+  // Relações
+  varas     Vara[]
+  processos Processo[]
+
+  @@map("tribunais")
+}
+
+/// Vara/Juízo dentro de um tribunal (ex.: "2ª Vara Cível de Campinas").
+model Vara {
+  id         String @id @default(cuid())
+  nome       String
+  comarca    String?
+  tribunalId String
+
+  // Relações
+  tribunal  Tribunal   @relation(fields: [tribunalId], references: [id])
+  processos Processo[]
+
+  @@index([tribunalId])
+  @@map("varas")
+}
+
+/// Processo jurídico (judicial, administrativo ou extrajudicial).
+/// Núcleo do sistema: agrega partes, movimentações, prazos e audiências.
+model Processo {
+  id                 String         @id @default(cuid())
+  numeroCnj          String         @unique
+  numeroAntigo       String?
+  classeProcessual   String?
+  tipo               TipoProcesso   @default(JUDICIAL)
+  fase               FaseProcesso   @default(CONHECIMENTO)
+  status             StatusProcesso @default(ATIVO)
+  sigiloso           Boolean        @default(false)
+  valorCausa         Decimal?       @db.Decimal(14, 2)
+  tribunalId         String?
+  varaId             String?
+  assuntoId          String?
+  ultimaSincronizacao DateTime?
+  observacoes        String?        @db.Text
+  criadoEm           DateTime       @default(now())
+  atualizadoEm       DateTime       @updatedAt
+
+  // Relações
+  tribunal      Tribunal?              @relation(fields: [tribunalId], references: [id])
+  vara          Vara?                  @relation(fields: [varaId], references: [id])
+  assunto       Assunto?               @relation(fields: [assuntoId], references: [id])
+  partes        Parte[]
+  responsaveis  ProcessoResponsavel[]
+  movimentacoes Movimentacao[]
+  prazos        Prazo[]
+  audiencias    Audiencia[]
+
+  @@index([status])
+  @@index([numeroCnj])
+  @@index([tribunalId])
+  @@index([varaId])
+  @@map("processos")
+}
+
+/// Parte do processo (associativa Cliente <-> Processo).
+/// A parte adversa pode não ser cliente do escritório (clienteId opcional).
+model Parte {
+  id         String    @id @default(cuid())
+  processoId String
+  clienteId  String?
+  nome       String
+  cpfCnpj    String?
+  polo       PoloParte
+  tipoParte  TipoParte @default(PARTE_PRINCIPAL)
+
+  // Relações
+  processo Processo @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  cliente  Cliente? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+
+  @@index([processoId])
+  @@index([clienteId])
+  @@map("partes")
+}
+
+/// Responsáveis pelo processo (associativa Usuario <-> Processo).
+/// Marca o(s) advogado(s)/estagiário(s) atuante(s); "principal" indica o titular.
+model ProcessoResponsavel {
+  processoId String
+  usuarioId  String
+  principal  Boolean  @default(false)
+  desde      DateTime @default(now())
+
+  // Relações
+  processo Processo @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  usuario  Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@id([processoId, usuarioId])
+  @@index([usuarioId])
+  @@map("processos_responsaveis")
+}
+
+/// Movimentação processual (andamento). Pode ser criada manualmente
+/// ou importada do tribunal; "hashTribunal" evita duplicidade na sincronização.
+model Movimentacao {
+  id              String           @id @default(cuid())
+  processoId      String
+  data            DateTime
+  descricao       String           @db.Text
+  tipo            TipoMovimentacao @default(OUTRO)
+  origemTribunal  Boolean          @default(false)
+  hashTribunal    String?
+  criadaPorId     String?
+  criadaEm        DateTime         @default(now())
+
+  // Relações
+  processo  Processo @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  criadaPor Usuario? @relation("MovimentacaoCriadaPor", fields: [criadaPorId], references: [id], onDelete: SetNull)
+
+  @@unique([processoId, hashTribunal])
+  @@index([processoId, data])
+  @@map("movimentacoes")
+}
+
+/// Prazo processual ou administrativo. Pode existir sem processo (administrativo).
+/// "fatal" indica prazo preclusivo; "diasCorridos=false" segue regra CPC (dias úteis).
+/// Sincroniza com Google Calendar via "googleEventId".
+model Prazo {
+  id              String      @id @default(cuid())
+  processoId      String?
+  titulo          String
+  descricao       String?     @db.Text
+  dataInicio      DateTime
+  dataVencimento  DateTime
+  fatal           Boolean     @default(false)
+  status          StatusPrazo @default(PENDENTE)
+  diasCorridos    Boolean     @default(false)
+  responsavelId   String
+  cumpridoEm      DateTime?
+  observacoes     String?     @db.Text
+  googleEventId   String?
+  criadoEm        DateTime    @default(now())
+  atualizadoEm    DateTime    @updatedAt
+
+  // Relações
+  processo    Processo? @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  responsavel Usuario   @relation("PrazoResponsavel", fields: [responsavelId], references: [id])
+
+  @@index([dataVencimento])
+  @@index([responsavelId, status])
+  @@index([processoId])
+  @@map("prazos")
+}
+
+/// Audiência vinculada a um processo. Sincroniza com Google Calendar.
+model Audiencia {
+  id            String          @id @default(cuid())
+  processoId    String
+  tipo          TipoAudiencia
+  dataHora      DateTime
+  local         String?
+  virtual       Boolean         @default(false)
+  linkVirtual   String?
+  responsavelId String?
+  status        StatusAudiencia @default(AGENDADA)
+  resultado     String?         @db.Text
+  observacoes   String?         @db.Text
+  googleEventId String?
+  criadoEm      DateTime        @default(now())
+  atualizadoEm  DateTime        @updatedAt
+
+  // Relações
+  processo    Processo @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  responsavel Usuario? @relation("AudienciaResponsavel", fields: [responsavelId], references: [id], onDelete: SetNull)
+
+  @@index([dataHora])
+  @@index([processoId])
+  @@map("audiencias")
+}
+
+/// Credenciais do usuário para integração com sistemas dos tribunais (PJe, eSAJ, etc.).
+/// IMPORTANTE: o campo `credencialCifrada` deve ser cifrado pela camada de aplicação
+/// (ex.: AES-GCM com chave gerenciada por KMS). NUNCA armazenar credenciais em claro.
+model IntegracaoTribunal {
+  id                 String          @id @default(cuid())
+  usuarioId          String
+  sistema            SistemaTribunal
+  tribunalSigla      String
+  credencialCifrada  String          @db.Text
+  ativa              Boolean         @default(true)
+  ultimoSync         DateTime?
+  criadoEm           DateTime        @default(now())
+  atualizadoEm       DateTime        @updatedAt
+
+  // Relações
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, sistema, tribunalSigla])
+  @@map("integracoes_tribunal")
+}
+
+/// Integração do usuário com Google (Calendar/Gmail) via OAuth2.
+/// IMPORTANTE: tokens (`accessTokenCif`, `refreshTokenCif`) devem ser cifrados
+/// pela camada de aplicação antes da persistência.
+model IntegracaoGoogle {
+  id              String   @id @default(cuid())
+  usuarioId       String   @unique
+  accessTokenCif  String   @db.Text
+  refreshTokenCif String   @db.Text
+  expiraEm        DateTime
+  calendarId      String?
+  ativa           Boolean  @default(true)
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+
+  // Relações
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("integracoes_google")
+}
