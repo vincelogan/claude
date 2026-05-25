@@ -20,6 +20,8 @@ dist/
 build/
 out/
 .next/
+next-env.d.ts
+.vercel
 .turbo/
 .cache/
 coverage/
