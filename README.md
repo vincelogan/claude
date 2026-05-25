@@ -47,32 +47,37 @@ não exija refatoração estrutural.
 
 ## Como começar
 
-> A aplicação Next.js ainda não foi inicializada. Os comandos abaixo refletem o fluxo
-> esperado assim que a base do projeto for criada.
+### Opção A — GitHub Codespaces (preview público, zero setup)
+
+1. Abra o repositório no GitHub
+2. Clique em **Code → Codespaces → Create codespace on `claude/loving-hopper-A0EOi`**
+3. Aguarde o `postCreate` rodar (instala deps, sobe Postgres, aplica migrations, semeia dados)
+4. No terminal do Codespace: `npm run dev`
+5. O GitHub expõe a porta 3000 como URL pública `*.app.github.dev`
+
+Login de teste já populado: **`donnici@donnici.adv.br`** / **`donnici`**
+
+### Opção B — Local com Docker
 
 ```bash
-# 1. Instalar dependências
+# 1. Subir o banco
+docker compose up -d
+
+# 2. Instalar deps + aplicar schema + popular tribunais e usuário admin
 npm install
+npm run db:migrate
+ADMIN_EMAIL=donnici@donnici.adv.br ADMIN_PASSWORD=donnici npm run db:seed
 
-# 2. Configurar variáveis de ambiente
-cp .env.example .env
-# Editar .env com DATABASE_URL, NEXTAUTH_SECRET, chaves de cifragem, etc.
-
-# 3. Aplicar migrações do banco
-npx prisma migrate dev
-
-# 4. (Opcional) Popular dados iniciais
-npx prisma db seed
-
-# 5. Rodar em modo desenvolvimento
+# 3. Rodar em desenvolvimento
 npm run dev
 ```
 
-Pré-requisitos:
+Acesso: http://localhost:3000 — login `donnici@donnici.adv.br` / `donnici`
 
-- Node.js 20+
-- PostgreSQL 15+ (local ou em container)
-- Conta Google Cloud com OAuth Client configurado (a partir da v2)
+### Opção C — Local com PostgreSQL nativo
+
+Mesmo fluxo da Opção B, mas com o Postgres do sistema. Ajuste a `DATABASE_URL`
+em `.env.local`. Pré-requisitos: Node.js 20+, PostgreSQL 15+.
 
 ## Roadmap
 

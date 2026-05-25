@@ -1,0 +1,57 @@
+{
+  "name": "Donnici Advogados - Plataforma de Processos",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "forwardPorts": [3000, 5432],
+  "portsAttributes": {
+    "3000": {
+      "label": "Donnici App (Next.js)",
+      "onAutoForward": "openBrowserOnce",
+      "visibility": "public"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "silent"
+    }
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+
+  "remoteEnv": {
+    "DATABASE_URL": "postgresql://donnici:donnici@db:5432/donnici",
+    "AUTH_SECRET": "donnici-codespaces-secret-key-2026-32ch",
+    "AUTH_TRUST_HOST": "true",
+    "ENCRYPTION_KEY": "donnici-codespaces-enc-key-32-bytes",
+    "ADMIN_EMAIL": "donnici@donnici.adv.br",
+    "ADMIN_PASSWORD": "donnici"
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Prisma.prisma",
+        "bradlc.vscode-tailwindcss",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "[prisma]": {
+          "editor.defaultFormatter": "Prisma.prisma"
+        }
+      }
+    }
+  }
+}
