@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: donnici-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: donnici
+      POSTGRES_PASSWORD: donnici
+      POSTGRES_DB: donnici
+    ports:
+      - "5432:5432"
+    volumes:
+      - donnici-pgdata:/var/lib/postgresql/data
+
+volumes:
+  donnici-pgdata:

@@ -161,55 +161,50 @@ async function seedTribunais() {
 // ASSUNTOS (hierarquia baseada na tabela do CNJ)
 // =============================================================================
 async function seedAssuntos() {
-  // Estrutura: { nome do pai -> lista de filhos }
-  const hierarquia: Record<string, string[]> = {
-    "Direito Civil": [
-      "Obrigações",
-      "Responsabilidade Civil",
-      "Família",
-      "Sucessões",
-      "Coisas",
-    ],
-    "Direito do Trabalho": [
-      "Verbas Rescisórias",
-      "Adicional de Insalubridade",
-      "Horas Extras",
-    ],
-    "Direito Tributário": ["ICMS", "ISS", "IPTU"],
-    "Direito do Consumidor": [
-      "Vício do Produto",
-      "Cobrança Indevida",
-      "Negativação Indevida",
-    ],
-  };
+  // Estrutura: { nome do pai, area, filhos }
+  const hierarquia: Array<{ nome: string; area: string; filhos: string[] }> = [
+    {
+      nome: "Direito Civil",
+      area: "CIVEL",
+      filhos: ["Obrigações", "Responsabilidade Civil", "Família", "Sucessões", "Coisas"],
+    },
+    {
+      nome: "Direito do Trabalho",
+      area: "TRABALHISTA",
+      filhos: ["Verbas Rescisórias", "Adicional de Insalubridade", "Horas Extras"],
+    },
+    {
+      nome: "Direito Tributário",
+      area: "TRIBUTARIO",
+      filhos: ["ICMS", "ISS", "IPTU"],
+    },
+    {
+      nome: "Direito do Consumidor",
+      area: "CONSUMIDOR",
+      filhos: ["Vício do Produto", "Cobrança Indevida", "Negativação Indevida"],
+    },
+  ];
 
   let totalPais = 0;
   let totalFilhos = 0;
 
-  for (const [nomePai, filhos] of Object.entries(hierarquia)) {
-    // Cria o assunto raiz primeiro
-    const pai = await prisma.assunto.upsert({
-      where: { nome: nomePai },
-      update: {},
-      create: {
-        nome: nomePai,
-        codigoCnj: null,
-        paiId: null,
-      },
-    });
+  for (const { nome: nomePai, area, filhos } of hierarquia) {
+    // findOrCreate para o assunto raiz (nome não é unique no schema)
+    let pai = await prisma.assunto.findFirst({ where: { nome: nomePai, paiId: null } });
+    if (!pai) {
+      pai = await prisma.assunto.create({
+        data: { nome: nomePai, area: area as any, codigoCnj: null, paiId: null },
+      });
+    }
     totalPais++;
 
-    // Cria os assuntos filhos referenciando o pai
     for (const nomeFilho of filhos) {
-      await prisma.assunto.upsert({
-        where: { nome: nomeFilho },
-        update: { paiId: pai.id },
-        create: {
-          nome: nomeFilho,
-          codigoCnj: null,
-          paiId: pai.id,
-        },
-      });
+      const existe = await prisma.assunto.findFirst({ where: { nome: nomeFilho, paiId: pai.id } });
+      if (!existe) {
+        await prisma.assunto.create({
+          data: { nome: nomeFilho, area: area as any, codigoCnj: null, paiId: pai.id },
+        });
+      }
       totalFilhos++;
     }
   }
@@ -248,16 +243,10 @@ async function seedVaras() {
   ];
 
   for (const v of varas) {
-    await prisma.vara.upsert({
-      where: {
-        nome_tribunalId: {
-          nome: v.nome,
-          tribunalId: v.tribunalId,
-        },
-      },
-      update: {},
-      create: v,
+    const existe = await prisma.vara.findFirst({
+      where: { nome: v.nome, tribunalId: v.tribunalId },
     });
+    if (!existe) await prisma.vara.create({ data: v });
   }
 
   console.log(`✓ ${varas.length} varas`);
