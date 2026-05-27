@@ -79,6 +79,40 @@ Acesso: http://localhost:3000 — login `donnici@donnici.adv.br` / `donnici`
 Mesmo fluxo da Opção B, mas com o Postgres do sistema. Ajuste a `DATABASE_URL`
 em `.env.local`. Pré-requisitos: Node.js 20+, PostgreSQL 15+.
 
+### Opção D — Deploy em AWS Amplify (produção / preview na web)
+
+O projeto já contém `amplify.yml` com a build spec.
+
+**1. Provisione um PostgreSQL gerenciado.** Opções recomendadas:
+- **[Neon](https://neon.tech)** (free tier, mais simples — copia uma `connection string`)
+- **Aurora Serverless v2 PostgreSQL** (AWS, paga por uso ~US$ 0,06/h mínimo)
+- **RDS PostgreSQL** `db.t4g.micro` (free tier 12 meses)
+
+**2. No console AWS Amplify:**
+- *Hosting → New app → Host web app*
+- Conecte o repositório `vincelogan/claude`, branch `claude/loving-hopper-A0EOi`
+- Framework será detectado como **Next.js (SSR)** automaticamente
+- Aceite o `amplify.yml` versionado no repo
+
+**3. Configure as variáveis de ambiente** (App settings → Environment variables):
+
+| Variável | Valor |
+|---|---|
+| `DATABASE_URL` | `postgresql://user:pass@host:5432/donnici?sslmode=require` |
+| `AUTH_SECRET` | gerar com `openssl rand -base64 32` |
+| `AUTH_URL` | `https://main.dXXXXXXX.amplifyapp.com` (URL final do Amplify) |
+| `AUTH_TRUST_HOST` | `true` |
+| `ENCRYPTION_KEY` | gerar com `openssl rand -base64 32` (32 bytes) |
+| `ADMIN_EMAIL` | `donnici@donnici.adv.br` (rodar seed depois) |
+| `ADMIN_PASSWORD` | escolher senha forte |
+| `GOOGLE_OAUTH_CLIENT_ID` | (opcional, para v2) |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | (opcional, para v2) |
+| `GOOGLE_OAUTH_REDIRECT_URI` | `https://<URL-Amplify>/api/integracoes/google/callback` |
+
+**4. Após o primeiro build**, rode o seed uma única vez para criar o usuário admin e popular tribunais. No console Amplify, vá em *Hosting → Redeploy this version* depois de adicionar as envs, ou conecte-se ao banco e rode `npm run db:seed` localmente apontando para a `DATABASE_URL` do Neon/RDS.
+
+**5. Trigger automático:** todo push para a branch conectada dispara um novo build.
+
 ## Roadmap
 
 ### v1 — Cadastros e prazos (em desenvolvimento)

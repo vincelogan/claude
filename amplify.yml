@@ -1,0 +1,24 @@
+version: 1
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            - nvm use 20
+            - npm ci --cache .npm --prefer-offline
+            - npx prisma generate
+        build:
+          commands:
+            # Aplica migrations no banco antes do build (idempotente).
+            # Se preferir aplicar manualmente, comente a linha abaixo.
+            - npx prisma migrate deploy
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - .next/cache/**/*
+          - .npm/**/*
+          - node_modules/**/*

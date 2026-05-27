@@ -8,7 +8,10 @@
 // =============================================================================
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" cobre dev local; "rhel-openssl-3.0.x" cobre o Lambda do AWS
+  // Amplify Hosting (Amazon Linux 2023 + OpenSSL 3).
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -159,24 +162,24 @@ enum StatusAudiencia {
 /// Cada usuário pode ser responsável por processos, prazos e audiências,
 /// além de manter integrações próprias com tribunais e Google.
 model Usuario {
-  id         String        @id @default(cuid())
-  nome       String
-  email      String        @unique
-  senhaHash  String
-  oab        String?
-  oabUf      String?       @db.Char(2)
-  perfil     PerfilUsuario
-  ativo      Boolean       @default(true)
-  criadoEm   DateTime      @default(now())
-  atualizadoEm DateTime    @updatedAt
+  id           String        @id @default(cuid())
+  nome         String
+  email        String        @unique
+  senhaHash    String
+  oab          String?
+  oabUf        String?       @db.Char(2)
+  perfil       PerfilUsuario
+  ativo        Boolean       @default(true)
+  criadoEm     DateTime      @default(now())
+  atualizadoEm DateTime      @updatedAt
 
   // Relações
-  processosResponsavel ProcessoResponsavel[]
-  prazosResponsavel    Prazo[]               @relation("PrazoResponsavel")
-  audienciasResponsavel Audiencia[]          @relation("AudienciaResponsavel")
-  movimentacoesCriadas Movimentacao[]        @relation("MovimentacaoCriadaPor")
-  integracoesTribunal  IntegracaoTribunal[]
-  integracaoGoogle     IntegracaoGoogle?
+  processosResponsavel  ProcessoResponsavel[]
+  prazosResponsavel     Prazo[]               @relation("PrazoResponsavel")
+  audienciasResponsavel Audiencia[]           @relation("AudienciaResponsavel")
+  movimentacoesCriadas  Movimentacao[]        @relation("MovimentacaoCriadaPor")
+  integracoesTribunal   IntegracaoTribunal[]
+  integracaoGoogle      IntegracaoGoogle?
 
   @@map("usuarios")
 }
@@ -210,15 +213,15 @@ model Cliente {
 /// Assunto jurídico (taxonomia CNJ). Hierárquico via auto-relação (paiId).
 /// Ex.: "Direito Civil > Obrigações > Inadimplemento".
 model Assunto {
-  id          String       @id @default(cuid())
-  codigoCnj   String?      @unique
-  nome        String
-  area        AreaJuridica
-  paiId       String?
+  id        String       @id @default(cuid())
+  codigoCnj String?      @unique
+  nome      String
+  area      AreaJuridica
+  paiId     String?
 
   // Auto-relação hierárquica
-  pai     Assunto?  @relation("AssuntoHierarquia", fields: [paiId], references: [id], onDelete: SetNull)
-  filhos  Assunto[] @relation("AssuntoHierarquia")
+  pai    Assunto?  @relation("AssuntoHierarquia", fields: [paiId], references: [id], onDelete: SetNull)
+  filhos Assunto[] @relation("AssuntoHierarquia")
 
   // Relações
   processos Processo[]
@@ -245,7 +248,7 @@ model Tribunal {
 
 /// Vara/Juízo dentro de um tribunal (ex.: "2ª Vara Cível de Campinas").
 model Vara {
-  id         String @id @default(cuid())
+  id         String  @id @default(cuid())
   nome       String
   comarca    String?
   tribunalId String
@@ -261,27 +264,27 @@ model Vara {
 /// Processo jurídico (judicial, administrativo ou extrajudicial).
 /// Núcleo do sistema: agrega partes, movimentações, prazos e audiências.
 model Processo {
-  id                 String         @id @default(cuid())
-  numeroCnj          String         @unique
-  numeroAntigo       String?
-  classeProcessual   String?
-  tipo               TipoProcesso   @default(JUDICIAL)
-  fase               FaseProcesso   @default(CONHECIMENTO)
-  status             StatusProcesso @default(ATIVO)
-  sigiloso           Boolean        @default(false)
-  valorCausa         Decimal?       @db.Decimal(14, 2)
-  tribunalId         String?
-  varaId             String?
-  assuntoId          String?
+  id                  String         @id @default(cuid())
+  numeroCnj           String         @unique
+  numeroAntigo        String?
+  classeProcessual    String?
+  tipo                TipoProcesso   @default(JUDICIAL)
+  fase                FaseProcesso   @default(CONHECIMENTO)
+  status              StatusProcesso @default(ATIVO)
+  sigiloso            Boolean        @default(false)
+  valorCausa          Decimal?       @db.Decimal(14, 2)
+  tribunalId          String?
+  varaId              String?
+  assuntoId           String?
   ultimaSincronizacao DateTime?
-  observacoes        String?        @db.Text
-  criadoEm           DateTime       @default(now())
-  atualizadoEm       DateTime       @updatedAt
+  observacoes         String?        @db.Text
+  criadoEm            DateTime       @default(now())
+  atualizadoEm        DateTime       @updatedAt
 
   // Relações
-  tribunal      Tribunal?              @relation(fields: [tribunalId], references: [id])
-  vara          Vara?                  @relation(fields: [varaId], references: [id])
-  assunto       Assunto?               @relation(fields: [assuntoId], references: [id])
+  tribunal      Tribunal?             @relation(fields: [tribunalId], references: [id])
+  vara          Vara?                 @relation(fields: [varaId], references: [id])
+  assunto       Assunto?              @relation(fields: [assuntoId], references: [id])
   partes        Parte[]
   responsaveis  ProcessoResponsavel[]
   movimentacoes Movimentacao[]
@@ -335,15 +338,15 @@ model ProcessoResponsavel {
 /// Movimentação processual (andamento). Pode ser criada manualmente
 /// ou importada do tribunal; "hashTribunal" evita duplicidade na sincronização.
 model Movimentacao {
-  id              String           @id @default(cuid())
-  processoId      String
-  data            DateTime
-  descricao       String           @db.Text
-  tipo            TipoMovimentacao @default(OUTRO)
-  origemTribunal  Boolean          @default(false)
-  hashTribunal    String?
-  criadaPorId     String?
-  criadaEm        DateTime         @default(now())
+  id             String           @id @default(cuid())
+  processoId     String
+  data           DateTime
+  descricao      String           @db.Text
+  tipo           TipoMovimentacao @default(OUTRO)
+  origemTribunal Boolean          @default(false)
+  hashTribunal   String?
+  criadaPorId    String?
+  criadaEm       DateTime         @default(now())
 
   // Relações
   processo  Processo @relation(fields: [processoId], references: [id], onDelete: Cascade)
@@ -358,21 +361,21 @@ model Movimentacao {
 /// "fatal" indica prazo preclusivo; "diasCorridos=false" segue regra CPC (dias úteis).
 /// Sincroniza com Google Calendar via "googleEventId".
 model Prazo {
-  id              String      @id @default(cuid())
-  processoId      String?
-  titulo          String
-  descricao       String?     @db.Text
-  dataInicio      DateTime
-  dataVencimento  DateTime
-  fatal           Boolean     @default(false)
-  status          StatusPrazo @default(PENDENTE)
-  diasCorridos    Boolean     @default(false)
-  responsavelId   String
-  cumpridoEm      DateTime?
-  observacoes     String?     @db.Text
-  googleEventId   String?
-  criadoEm        DateTime    @default(now())
-  atualizadoEm    DateTime    @updatedAt
+  id             String      @id @default(cuid())
+  processoId     String?
+  titulo         String
+  descricao      String?     @db.Text
+  dataInicio     DateTime
+  dataVencimento DateTime
+  fatal          Boolean     @default(false)
+  status         StatusPrazo @default(PENDENTE)
+  diasCorridos   Boolean     @default(false)
+  responsavelId  String
+  cumpridoEm     DateTime?
+  observacoes    String?     @db.Text
+  googleEventId  String?
+  criadoEm       DateTime    @default(now())
+  atualizadoEm   DateTime    @updatedAt
 
   // Relações
   processo    Processo? @relation(fields: [processoId], references: [id], onDelete: SetNull)
@@ -414,15 +417,15 @@ model Audiencia {
 /// IMPORTANTE: o campo `credencialCifrada` deve ser cifrado pela camada de aplicação
 /// (ex.: AES-GCM com chave gerenciada por KMS). NUNCA armazenar credenciais em claro.
 model IntegracaoTribunal {
-  id                 String          @id @default(cuid())
-  usuarioId          String
-  sistema            SistemaTribunal
-  tribunalSigla      String
-  credencialCifrada  String          @db.Text
-  ativa              Boolean         @default(true)
-  ultimoSync         DateTime?
-  criadoEm           DateTime        @default(now())
-  atualizadoEm       DateTime        @updatedAt
+  id                String          @id @default(cuid())
+  usuarioId         String
+  sistema           SistemaTribunal
+  tribunalSigla     String
+  credencialCifrada String          @db.Text
+  ativa             Boolean         @default(true)
+  ultimoSync        DateTime?
+  criadoEm          DateTime        @default(now())
+  atualizadoEm      DateTime        @updatedAt
 
   // Relações
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
