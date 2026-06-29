@@ -42,6 +42,7 @@ export interface RioEvent {
   lede: Localized;
   intro: Localized[];
   hero: string;
+  photo?: Photo;
   keywords: string[];
   sections: Section[];
   faqs: FAQ[];
@@ -51,6 +52,13 @@ export interface RioEvent {
     endDate: string;
     location: string;
   };
+}
+
+/** A real, freely-licensed photo with attribution. */
+export interface Photo {
+  url: string;
+  credit?: string;
+  license?: string;
 }
 
 /** A neighborhood (hub + detail template). */
@@ -65,9 +73,43 @@ export interface Neighborhood {
   /** honest trade-off — the credibility signal */
   tradeoff: Localized;
   highlights: Localized[]; // bullet list
-  hero: string;
+  hero: string; // SVG art fallback
+  photo?: Photo; // real licensed photo (preferred when present)
   price: PriceLevel;
   faqs?: FAQ[];
+}
+
+/** A hotel entity (hub + detail template, Hotel schema). */
+export interface Hotel {
+  slug: string;
+  name: string;
+  neighborhood: string; // bairro label
+  zone: Localized;
+  subtype: Localized;
+  price: PriceLevel;
+  officialUrl?: string;
+  bookingSlug?: string; // /go/<slug>
+  blurb: Localized;
+  tradeoff?: Localized;
+  tags?: string[];
+  hero: string;
+  photo?: Photo;
+}
+
+/** A restaurant entity (detail template, Restaurant schema). */
+export interface Restaurant {
+  slug: string;
+  name: string;
+  cuisine: Localized;
+  neighborhood: string;
+  michelin?: string; // e.g. "★★ Michelin (2026)"
+  price: PriceLevel;
+  officialUrl?: string;
+  bookingSlug?: string;
+  blurb: Localized;
+  tags?: string[];
+  hero: string;
+  photo?: Photo;
 }
 
 export type AttractionCategory = 'icones' | 'praias' | 'natureza' | 'cultura' | 'vida-noturna';
@@ -86,6 +128,10 @@ export interface Attraction {
   costNote: Localized;
   tip: Localized;
   hero: string;
+  photo?: Photo;
+  /** Official site and official ticket-purchase URL */
+  officialUrl?: string;
+  ticketUrl?: string;
   keywords: string[];
   faqs?: FAQ[];
 }

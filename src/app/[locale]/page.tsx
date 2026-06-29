@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 import { EVENTS, NEIGHBORHOODS, ATTRACTIONS, EAT_SECTIONS, ESSENTIALS, FAQS, VIP_SECTIONS } from '@/content';
 import { EventCard, NeighborhoodCard, AttractionCard, EssentialCard, ItemCard } from '@/components/Cards';
 import { SectionHeader } from '@/components/Section';
 import { WaveDivider } from '@/components/WaveDivider';
 import { FAQAccordion } from '@/components/FAQAccordion';
 import { Newsletter } from '@/components/Newsletter';
+import { SmartImage } from '@/components/SmartImage';
 import { JsonLd } from '@/components/JsonLd';
 import { t, pick, type Localized } from '@/lib/i18n';
 import { SITE, isLocale, type Locale } from '@/lib/site';
@@ -14,6 +14,7 @@ import { buildMetadata } from '@/lib/seo';
 import { assetPath } from '@/lib/asset';
 
 const HERO = '/img/hero.svg';
+const HERO_PHOTO = 'https://commons.wikimedia.org/wiki/Special:FilePath/Sugarloaf_Mountain%2C_Rio_de_Janeiro%2C_Brazil.jpg?width=2000';
 
 const heroH1: Localized = {
   pt: 'O melhor do Rio, num só lugar.',
@@ -78,7 +79,7 @@ export default function Home({ params }: { params: { locale: string } }) {
 
       {/* 1. HERO */}
       <section className="relative isolate overflow-hidden bg-mata text-white">
-        <Image src={assetPath(HERO)} alt="" fill priority sizes="100vw" className="object-cover opacity-70" />
+        <SmartImage src={HERO_PHOTO} fallback={assetPath(HERO)} alt="" fill priority sizes="100vw" className="object-cover opacity-70" />
         <div className="absolute inset-0 bg-gradient-to-b from-mata/80 via-mata/55 to-mata" />
         <div className="container-rio relative py-24 sm:py-32 lg:py-40">
           <div className="max-w-3xl animate-fade-up">

@@ -11,6 +11,8 @@ export const ATTRACTION_CATEGORIES: { key: AttractionCategory; label: { pt: stri
 export const ATTRACTIONS: Attraction[] = [
   {
     slug: 'cristo-redentor',
+    officialUrl: 'https://www.tremdocorcovado.rio/',
+    ticketUrl: 'https://www.tremdocorcovado.rio/',
     name: 'Cristo Redentor',
     category: 'icones',
     area: 'Corcovado',
@@ -46,7 +48,14 @@ export const ATTRACTIONS: Attraction[] = [
   },
   {
     slug: 'pao-de-acucar',
+    officialUrl: 'https://www.bondinho.com.br/',
+    ticketUrl: 'https://www.bondinho.com.br/ingresso-bondinho',
     name: 'Pão de Açúcar',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Sugarloaf_Mountain%2C_Rio_de_Janeiro%2C_Brazil.jpg?width=1600',
+      credit: 'Donatas Dabravolskas / Wikimedia Commons',
+      license: 'CC BY-SA 4.0',
+    },
     category: 'icones',
     area: 'Urca',
     tagline: { pt: 'O bondinho e a melhor vista da cidade', en: 'The cable car and the best view in the city' },
@@ -82,6 +91,11 @@ export const ATTRACTIONS: Attraction[] = [
   {
     slug: 'praias-zona-sul',
     name: 'Copacabana, Ipanema & Arpoador',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Rio_de_janeiro_copacabana_beach_2010.JPG?width=1600',
+      credit: 'chensiyuan / Wikimedia Commons',
+      license: 'CC BY-SA 4.0',
+    },
     category: 'praias',
     area: 'Zona Sul',
     tagline: { pt: 'As praias mais famosas do planeta', en: 'The most famous beaches on the planet' },
@@ -116,7 +130,13 @@ export const ATTRACTIONS: Attraction[] = [
   },
   {
     slug: 'floresta-da-tijuca',
+    officialUrl: 'https://parquenacionaldatijuca.rio/',
     name: 'Floresta da Tijuca',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/A%C3%A7ude_Solid%C3%A3o_na_Floresta_da_Tijuca_I.jpg?width=1600',
+      credit: 'Halley Pacheco de Oliveira / Wikimedia Commons',
+      license: 'CC BY-SA 3.0',
+    },
     category: 'natureza',
     area: 'Tijuca',
     tagline: { pt: 'A maior floresta urbana do mundo', en: 'The largest urban forest in the world' },
@@ -151,7 +171,13 @@ export const ATTRACTIONS: Attraction[] = [
   },
   {
     slug: 'escadaria-selaron',
+    officialUrl: 'https://riotur.rio/en/que_fazer/escadaria-selaron-lapa-steps/',
     name: 'Escadaria Selarón',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Colorful_Selaron_Stairs_5.jpg?width=1600',
+      credit: 'Donatas Dabravolskas / Wikimedia Commons',
+      license: 'CC BY-SA 4.0',
+    },
     category: 'cultura',
     area: 'Lapa / Santa Teresa',
     tagline: { pt: '2.000 azulejos de 60 países', en: '2,000 tiles from 60 countries' },
@@ -183,6 +209,8 @@ export const ATTRACTIONS: Attraction[] = [
   },
   {
     slug: 'maracana',
+    officialUrl: 'https://en.tourmaracana.com.br/',
+    ticketUrl: 'https://en.tourmaracana.com.br/ingressos',
     name: 'Maracanã',
     category: 'cultura',
     area: 'Maracanã',
@@ -219,6 +247,11 @@ export const ATTRACTIONS: Attraction[] = [
   {
     slug: 'pedra-do-sal',
     name: 'Pedra do Sal',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Arcos_da_Lapa_in_Rio_de_Janeiro.jpg?width=1600',
+      credit: 'Rodrigo Soldon / Wikimedia Commons',
+      license: 'CC BY 2.0',
+    },
     category: 'vida-noturna',
     area: 'Saúde / Pequena África',
     tagline: { pt: 'O berço do samba, ao ar livre', en: 'The birthplace of samba, in the open air' },
@@ -250,7 +283,14 @@ export const ATTRACTIONS: Attraction[] = [
   },
   {
     slug: 'jardim-botanico-parque-lage',
+    officialUrl: 'https://www.gov.br/jbrj/pt-br/',
+    ticketUrl: 'https://jbrj.eleventickets.com/',
     name: 'Jardim Botânico & Parque Lage',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/As_palmeiras_imperiais_do_Jardim_Bot%C3%A2nico_-_Rio_de_Janeiro._%289062349874%29.jpg?width=1600',
+      credit: 'Halley Pacheco de Oliveira / Wikimedia Commons',
+      license: 'CC BY-SA 3.0',
+    },
     category: 'natureza',
     area: 'Jardim Botânico',
     tagline: { pt: 'Palmeiras imperiais e um palacete com vista', en: 'Imperial palms and a mansion with a view' },

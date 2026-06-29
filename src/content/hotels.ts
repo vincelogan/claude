@@ -1,0 +1,203 @@
+import type { Hotel } from './types';
+
+export const HOTELS: Hotel[] = [
+  {
+    slug: 'belmond-copacabana-palace',
+    name: 'Belmond Copacabana Palace',
+    neighborhood: 'Copacabana',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    subtype: { pt: 'Grande luxo · ícone de 1923', en: 'Grand luxury · 1923 landmark' },
+    price: 'luxury',
+    officialUrl: 'https://www.belmond.com/hotels/south-america/brazil/rio-de-janeiro/belmond-copacabana-palace/',
+    bookingSlug: 'copacabana-palace',
+    hero: '/img/sightseeing.svg',
+    tags: ['iconic', 'beachfront', 'pool', 'fine-dining'],
+    blurb: {
+      pt: 'A grande dame de 1923 na orla — glamour clássico, a piscina mais famosa da cidade e o MEE com estrela Michelin. Serviço impecável e as festas mais exclusivas de Réveillon e Carnaval.',
+      en: 'The 1923 grande dame on the beachfront — old-world glamour, the city’s most famous pool and the Michelin-starred MEE. Impeccable service and the most exclusive New Year and Carnival parties.',
+    },
+    tradeoff: {
+      pt: 'Você fica na parte movimentada de Copacabana, não no eixo mais tranquilo de Ipanema-Leblon. Pague pela lenda e pelo serviço.',
+      en: 'You’re on the busy Copacabana stretch, not the calmer Ipanema-Leblon axis. Pay for the legend and the service.',
+    },
+  },
+  {
+    slug: 'hotel-fasano-ipanema',
+    name: 'Hotel Fasano Rio',
+    neighborhood: 'Ipanema',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    subtype: { pt: 'Design · piscina rooftop', en: 'Design · rooftop pool' },
+    price: 'luxury',
+    officialUrl: 'https://www.fasano.com.br/hospedagem/hotel-fasano-rio-de-janeiro',
+    bookingSlug: 'fasano',
+    hero: '/img/stay.svg',
+    tags: ['design', 'beachfront', 'rooftop-pool', 'ipanema'],
+    blurb: {
+      pt: 'Interiores de Philippe Starck e a piscina de cobertura mais disputada da cidade, de frente para Ipanema. O restaurante Gero atrai um público local elegante.',
+      en: 'Philippe Starck interiors and the most coveted rooftop pool in the city, facing Ipanema. The Gero restaurant draws a stylish local crowd.',
+    },
+    tradeoff: {
+      pt: 'Os quartos são menores que os das grandes casas de Copacabana — reserve uma categoria com vista para o mar.',
+      en: 'Rooms run smaller than the grand Copacabana houses — book a sea-view category.',
+    },
+  },
+  {
+    slug: 'emiliano-rio',
+    name: 'Emiliano Rio',
+    neighborhood: 'Copacabana',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    subtype: { pt: 'Contemporâneo · discreto', en: 'Contemporary · discreet' },
+    price: 'luxury',
+    officialUrl: 'https://www.emiliano.com.br/en/emiliano-rio',
+    bookingSlug: 'emiliano',
+    hero: '/img/sightseeing.svg',
+    tags: ['contemporary', 'beachfront', 'rooftop-pool', 'spa'],
+    blurb: {
+      pt: 'Luxo contemporâneo e discreto perto da ponta mais tranquila de Copacabana, junto a Ipanema. Piscina de cobertura e spa excelentes, serviço atencioso.',
+      en: 'Discreet contemporary luxury near the quieter, Ipanema-facing end of Copacabana. A strong rooftop pool and spa, with genuinely attentive service.',
+    },
+    tradeoff: {
+      pt: 'É compacto para um hotel de luxo — ajuste a expectativa se você prefere áreas comuns amplas.',
+      en: 'It’s compact for a luxury property — manage expectations if you prefer sprawling common spaces.',
+    },
+  },
+  {
+    slug: 'fairmont-rio-copacabana',
+    name: 'Fairmont Rio de Janeiro Copacabana',
+    neighborhood: 'Copacabana',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    subtype: { pt: 'Grande luxo · vistas', en: 'Grand luxury · views' },
+    price: 'luxury',
+    officialUrl: 'https://www.fairmont.com/rio-de-janeiro/',
+    hero: '/img/sightseeing.svg',
+    tags: ['beachfront', 'rooftop-pools', 'spa', 'arpoador-end'],
+    blurb: {
+      pt: 'No extremo de Copacabana junto ao Arpoador, com algumas das melhores vistas de varanda da cidade e piscinas duplas no terraço. Lugar privilegiado para os fogos de Réveillon.',
+      en: 'At the Arpoador end of Copacabana, with some of the best balcony views in the city and twin rooftop pools. A prime spot for the New Year fireworks.',
+    },
+    tradeoff: {
+      pt: 'Quartos confortáveis mais que cheios de personalidade — venha pela vista e pelo endereço.',
+      en: 'Rooms are comfortable rather than characterful — come for the views and the address.',
+    },
+  },
+  {
+    slug: 'janeiro-hotel-leblon',
+    name: 'Janeiro Hotel',
+    neighborhood: 'Leblon',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    subtype: { pt: 'Boutique · design', en: 'Boutique · design' },
+    price: 'high',
+    officialUrl: 'https://www.janeirohotel.rio/',
+    bookingSlug: 'janeiro',
+    hero: '/img/stay.svg',
+    tags: ['boutique', 'beachfront', 'rooftop', 'leblon'],
+    blurb: {
+      pt: 'Hotel boutique minimalista e sustentável na orla do Leblon, o trecho residencial mais nobre. Rooftop com bar e restaurante que atrai um público fashion.',
+      en: 'A minimalist, sustainable boutique hotel on Leblon’s seafront, the most upscale residential stretch. A rooftop bar and restaurant draw a fashionable crowd.',
+    },
+    tradeoff: {
+      pt: 'Leblon é mais calmo e caro que Ipanema; poucos quartos significam reservar cedo na alta temporada.',
+      en: 'Leblon is calmer and pricier than Ipanema; the limited room count means booking early in high season.',
+    },
+  },
+  {
+    slug: 'grand-hyatt-rio',
+    name: 'Grand Hyatt Rio de Janeiro',
+    neighborhood: 'Barra da Tijuca',
+    zone: { pt: 'Zona Oeste', en: 'West Zone' },
+    subtype: { pt: 'Resort · família', en: 'Resort · family' },
+    price: 'high',
+    officialUrl: 'https://www.hyatt.com/grand-hyatt/riogh-grand-hyatt-rio-de-janeiro',
+    bookingSlug: 'grand-hyatt',
+    hero: '/img/things-to-do.svg',
+    tags: ['resort', 'beachfront', 'pools', 'family', 'barra'],
+    blurb: {
+      pt: 'Resort urbano moderno entre a lagoa e o Atlântico, com várias piscinas, restaurantes e espaço de eventos. Ideal para famílias e estadias longas.',
+      en: 'A large modern resort between the lagoon and the Atlantic, with multiple pools, restaurants and event space. Ideal for families and long stays.',
+    },
+    tradeoff: {
+      pt: 'Fica a 40+ minutos de Copacabana e Ipanema — planeje os transfers e o trânsito de pico.',
+      en: 'It’s 40-plus minutes from Copacabana and Ipanema — plan transfers and peak-hour traffic.',
+    },
+  },
+  {
+    slug: 'hilton-copacabana',
+    name: 'Hilton Copacabana Rio de Janeiro',
+    neighborhood: 'Leme / Copacabana',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    subtype: { pt: 'Upscale · orla', en: 'Upscale · beachfront' },
+    price: 'high',
+    officialUrl: 'https://www.hilton.com/en/hotels/riohihh-hilton-rio-de-janeiro-copacabana/',
+    hero: '/img/sightseeing.svg',
+    tags: ['beachfront', 'rooftop-pool', 'leme-end', 'views'],
+    blurb: {
+      pt: 'No extremo do Leme, em Copacabana, com conforto internacional confiável, piscina de cobertura e ótimas vistas do mar. Bom para quem acumula pontos.',
+      en: 'At the Leme end of Copacabana, with dependable international-brand comfort, a rooftop pool and strong sea views. Great for points members.',
+    },
+    tradeoff: {
+      pt: 'O Leme é mais tranquilo e fica a uma caminhada longa do lado de Ipanema — pode ser vantagem ou não.',
+      en: 'The Leme end is quieter and a longer walk to the Ipanema side — a plus or a drawback depending on your plans.',
+    },
+  },
+  {
+    slug: 'mama-ruisa-santa-teresa',
+    name: 'Mama Ruisa',
+    neighborhood: 'Santa Teresa',
+    zone: { pt: 'Centro', en: 'Centro' },
+    subtype: { pt: 'Boutique · romântico', en: 'Boutique · romantic' },
+    price: 'high',
+    officialUrl: 'https://www.mamaruisa.com/',
+    hero: '/img/nightlife.svg',
+    tags: ['boutique', 'garden', 'intimate', 'santa-teresa'],
+    blurb: {
+      pt: 'Casarão colonial intimista em Santa Teresa, com poucos quartos personalizados, piscina e jardim com vista para a baía. Romântico e longe das multidões.',
+      en: 'An intimate colonial-mansion guesthouse in Santa Teresa with a handful of individually styled rooms, a pool and garden views over the bay. Romantic and away from the crowds.',
+    },
+    tradeoff: {
+      pt: 'Não há praia por perto e o terreno é íngreme — conte com Uber para tudo.',
+      en: 'No beach nearby and hilly access — factor an Uber into every outing.',
+    },
+  },
+  {
+    slug: 'yoo2-botafogo',
+    name: 'Yoo2 Rio de Janeiro by Intercity',
+    neighborhood: 'Botafogo',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    subtype: { pt: 'Design · custo-benefício', en: 'Design · value' },
+    price: 'mid',
+    officialUrl: 'https://www.intercityhoteis.com.br/',
+    hero: '/img/vip.svg',
+    tags: ['design', 'rooftop-pool', 'sugarloaf-views', 'botafogo'],
+    blurb: {
+      pt: 'Hotel de design e bom custo na enseada de Botafogo, com rooftop e bar de frente para o Pão de Açúcar. Bairro residencial bem servido de metrô.',
+      en: 'A design-led, good-value hotel on Botafogo Bay with a rooftop and bar facing Sugarloaf. A residential neighborhood well served by the metro.',
+    },
+    tradeoff: {
+      pt: 'A água da enseada não é para banho — trate o cenário como vista e vá às praias da Zona Sul de metrô.',
+      en: 'The bay water isn’t for swimming — treat the setting as scenery and take the metro to the South Zone beaches.',
+    },
+  },
+  {
+    slug: 'arpoador-inn',
+    name: 'Arpoador Inn',
+    neighborhood: 'Arpoador / Ipanema',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    subtype: { pt: 'Orla · custo-benefício', en: 'Beachfront · value' },
+    price: 'mid',
+    hero: '/img/stay.svg',
+    tags: ['beachfront', 'value', 'arpoador', 'sunset'],
+    blurb: {
+      pt: 'Uma pousada simples com um trunfo raro: posição quase na areia do Arpoador, ao lado da pedra do pôr do sol mais famoso da cidade. Os quartos da frente ficam sobre o mar.',
+      en: 'A no-frills inn with a rare asset: a near-on-the-sand position at Arpoador, beside the city’s most famous sunset rock. Front rooms sit right above the water.',
+    },
+    tradeoff: {
+      pt: 'Não espere acabamentos ou comodidades de luxo — você paga pela localização imbatível. Reserve um quarto de frente para o mar.',
+      en: 'Don’t expect luxury finishes or amenities — you’re paying for an unbeatable location. Book a sea-facing room.',
+    },
+  },
+];
+
+const BY_SLUG = new Map(HOTELS.map((h) => [h.slug, h]));
+export function getHotel(slug: string) {
+  return BY_SLUG.get(slug);
+}

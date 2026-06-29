@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { ATTRACTIONS, getAttraction } from '@/content';
 import { PageHero } from '@/components/PageHero';
 import { FAQAccordion } from '@/components/FAQAccordion';
+import { EntityLinks } from '@/components/EntityLinks';
 import { JsonLd } from '@/components/JsonLd';
 import { t, pick } from '@/lib/i18n';
 import { SITE, isLocale, type Locale, absoluteUrl } from '@/lib/site';
@@ -62,6 +63,7 @@ export default function AttractionPage({ params }: { params: { locale: string; s
         title={a.name}
         lede={pick(a.tagline, locale)}
         image={a.hero}
+        photo={a.photo}
       />
 
       <div className="container-rio py-16">
@@ -84,6 +86,13 @@ export default function AttractionPage({ params }: { params: { locale: string; s
           <span className="font-semibold">💡 {t('label.tip', locale)}: </span>
           {pick(a.tip, locale)}
         </div>
+
+        <EntityLinks
+          locale={locale}
+          officialUrl={a.officialUrl}
+          ticketUrl={a.ticketUrl}
+          className="mt-8"
+        />
 
         {a.faqs && a.faqs.length > 0 && (
           <div className="mt-12">

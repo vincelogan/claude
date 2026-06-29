@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import type { RioEvent, Neighborhood, Attraction, Item } from '@/content/types';
 import { Countdown } from './Countdown';
+import { SmartImage } from './SmartImage';
 import { t, pick } from '@/lib/i18n';
 import { assetPath } from '@/lib/asset';
 import type { Locale } from '@/lib/site';
@@ -15,8 +15,9 @@ export function EventCard({ event, locale }: { event: RioEvent; locale: Locale }
       className="card card-hover group block bg-mata text-white"
     >
       <div className="relative aspect-[16/10] overflow-hidden">
-        <Image
-          src={assetPath(event.hero)}
+        <SmartImage
+          src={event.photo?.url ?? assetPath(event.hero)}
+          fallback={assetPath(event.hero)}
           alt=""
           fill
           sizes="(max-width: 768px) 100vw, 50vw"
@@ -43,8 +44,9 @@ export function NeighborhoodCard({ n, locale }: { n: Neighborhood; locale: Local
   return (
     <Link href={`/${locale}/onde-ficar/${n.slug}`} className="card card-hover group block">
       <div className="relative aspect-[4/3] overflow-hidden">
-        <Image
-          src={assetPath(n.hero)}
+        <SmartImage
+          src={n.photo?.url ?? assetPath(n.hero)}
+          fallback={assetPath(n.hero)}
           alt=""
           fill
           sizes="(max-width: 640px) 100vw, 33vw"
@@ -71,8 +73,9 @@ export function AttractionCard({ a, locale }: { a: Attraction; locale: Locale })
   return (
     <Link href={`/${locale}/o-que-fazer/${a.slug}`} className="card card-hover group block">
       <div className="relative aspect-[4/3] overflow-hidden">
-        <Image
-          src={assetPath(a.hero)}
+        <SmartImage
+          src={a.photo?.url ?? assetPath(a.hero)}
+          fallback={assetPath(a.hero)}
           alt=""
           fill
           sizes="(max-width: 640px) 50vw, 25vw"

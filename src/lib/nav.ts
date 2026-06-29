@@ -46,6 +46,15 @@ export const NAV: NavGroup[] = [
           { href: 'onde-ficar/barra-da-tijuca', label: { pt: 'Barra da Tijuca', en: 'Barra da Tijuca' } },
         ],
       },
+      {
+        heading: { pt: 'Hotéis de luxo', en: 'Luxury hotels' },
+        items: [
+          { href: 'hoteis', label: { pt: 'Todos os hotéis', en: 'All hotels' } },
+          { href: 'hoteis/belmond-copacabana-palace', label: { pt: 'Copacabana Palace', en: 'Copacabana Palace' } },
+          { href: 'hoteis/hotel-fasano-ipanema', label: { pt: 'Hotel Fasano', en: 'Hotel Fasano' } },
+          { href: 'hoteis/emiliano-rio', label: { pt: 'Emiliano Rio', en: 'Emiliano Rio' } },
+        ],
+      },
     ],
   },
   {

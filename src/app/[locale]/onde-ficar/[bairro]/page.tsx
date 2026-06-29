@@ -42,6 +42,7 @@ export default function BairroPage({ params }: { params: { locale: string; bairr
         title={n.name}
         lede={pick(n.tagline, locale)}
         image={n.hero}
+        photo={n.photo}
       />
 
       <div className="container-rio grid gap-12 py-16 lg:grid-cols-[1fr_320px]">

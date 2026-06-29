@@ -1,7 +1,8 @@
-import Image from 'next/image';
 import { Breadcrumbs, type Crumb } from './Breadcrumbs';
 import { WaveDivider } from './WaveDivider';
+import { SmartImage } from './SmartImage';
 import { assetPath } from '@/lib/asset';
+import type { Photo } from '@/content/types';
 import type { Locale } from '@/lib/site';
 
 export function PageHero({
@@ -11,6 +12,7 @@ export function PageHero({
   title,
   lede,
   image,
+  photo,
   meta,
 }: {
   locale: Locale;
@@ -19,11 +21,25 @@ export function PageHero({
   title: string;
   lede?: string;
   image: string;
+  photo?: Photo;
   meta?: string; // small line above title (e.g. dates, area)
 }) {
   return (
     <header className="relative isolate overflow-hidden bg-mata text-white">
-      <Image src={assetPath(image)} alt="" fill priority sizes="100vw" className="object-cover opacity-55" />
+      <SmartImage
+        src={photo?.url ?? assetPath(image)}
+        fallback={assetPath(image)}
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover opacity-55"
+      />
+      {photo?.credit && (
+        <span className="absolute bottom-2 right-3 z-10 text-[10px] text-white/55">
+          📷 {photo.credit}
+        </span>
+      )}
       <div className="absolute inset-0 bg-gradient-to-b from-mata/70 via-mata/55 to-mata" />
       <div className="container-rio relative pb-16 pt-8 sm:pb-20 sm:pt-10">
         <Breadcrumbs crumbs={crumbs} locale={locale} />

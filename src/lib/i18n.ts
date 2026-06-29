@@ -100,8 +100,8 @@ const DICT = {
   },
   'footer.rights': { pt: 'Todos os direitos reservados.', en: 'All rights reserved.' },
   'footer.disclaimer': {
-    pt: 'Guia independente. Preços, datas e detalhes mudam — confirme com fontes oficiais antes de reservar.',
-    en: 'Independent guide. Prices, dates and details change — confirm with official sources before booking.',
+    pt: 'Guia independente. Preços, datas e detalhes mudam — confirme com fontes oficiais antes de reservar. Fotos via Wikimedia Commons (CC BY / CC BY-SA).',
+    en: 'Independent guide. Prices, dates and details change — confirm with official sources before booking. Photos via Wikimedia Commons (CC BY / CC BY-SA).',
   },
 } as const;
 

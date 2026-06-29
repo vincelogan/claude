@@ -79,6 +79,7 @@ export default function EventPage({ params }: { params: { locale: string; evento
         title={pick(event.name, locale)}
         lede={pick(event.lede, locale)}
         image={event.hero}
+        photo={event.photo}
       />
 
       <div className="container-rio py-14">

@@ -4,6 +4,11 @@ export const NEIGHBORHOODS: Neighborhood[] = [
   {
     slug: 'ipanema',
     name: 'Ipanema',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Ipanema_e_Morro_Dois_Irm%C3%A3os_02.JPG?width=1600',
+      credit: 'Vani Ribeiro / Wikimedia Commons',
+      license: 'CC BY-SA 3.0',
+    },
     zone: { pt: 'Zona Sul', en: 'South Zone' },
     tagline: { pt: 'Sofisticado, local e caminhável', en: 'Sophisticated, local and walkable' },
     bestFor: { pt: 'Primeira viagem, casais', en: 'First trip, couples' },
@@ -32,6 +37,11 @@ export const NEIGHBORHOODS: Neighborhood[] = [
   {
     slug: 'leblon',
     name: 'Leblon',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Vista_de_Leblon_e_Ipanema%2C_do_Mirante_do_Leblon_-_panoramio.jpg?width=1600',
+      credit: 'Wikimedia Commons',
+      license: 'CC BY 3.0',
+    },
     zone: { pt: 'Zona Sul', en: 'South Zone' },
     tagline: { pt: 'O endereço mais exclusivo e tranquilo', en: 'The most exclusive, calmest address' },
     bestFor: { pt: 'Luxo, gastronomia', en: 'Luxury, fine dining' },
@@ -60,6 +70,11 @@ export const NEIGHBORHOODS: Neighborhood[] = [
   {
     slug: 'copacabana',
     name: 'Copacabana',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Rio_de_janeiro_copacabana_beach_2010.JPG?width=1600',
+      credit: 'chensiyuan / Wikimedia Commons',
+      license: 'CC BY-SA 4.0',
+    },
     zone: { pt: 'Zona Sul', en: 'South Zone' },
     tagline: { pt: 'Icônico, vibrante e com ótimo custo', en: 'Iconic, lively and great value' },
     bestFor: { pt: 'Clássicos, preço', en: 'The classics, value' },
@@ -88,6 +103,11 @@ export const NEIGHBORHOODS: Neighborhood[] = [
   {
     slug: 'botafogo',
     name: 'Botafogo',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Vista_do_Botafogo_Praia_Shopping_01.jpg?width=1600',
+      credit: 'Halley Pacheco de Oliveira / Wikimedia Commons',
+      license: 'CC BY-SA 3.0',
+    },
     zone: { pt: 'Zona Sul', en: 'South Zone' },
     tagline: { pt: 'Em alta, com a melhor vista do Pão de Açúcar', en: 'On the rise, with the best Sugarloaf view' },
     bestFor: { pt: 'Vibe local, jovens', en: 'Local vibe, younger crowd' },
@@ -116,6 +136,11 @@ export const NEIGHBORHOODS: Neighborhood[] = [
   {
     slug: 'santa-teresa',
     name: 'Santa Teresa',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Bondinho_de_Santa_Teresa_%283725740423%29.jpg?width=1600',
+      credit: 'Rodrigo Soldon / Wikimedia Commons',
+      license: 'CC BY 2.0',
+    },
     zone: { pt: 'Centro', en: 'Centro' },
     tagline: { pt: 'Boêmio, colonial e cheio de vistas', en: 'Bohemian, colonial and full of views' },
     bestFor: { pt: 'Arte, romance', en: 'Art, romance' },

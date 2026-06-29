@@ -26,6 +26,11 @@ export const carnaval: RioEvent = {
     },
   ],
   hero: '/img/carnaval.svg',
+  photo: {
+    url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Carnival_of_Rio_de_Janeiro_2014_%2812957229613%29.jpg?width=1600',
+    credit: 'Wikimedia Commons',
+    license: 'CC BY 2.0',
+  },
   keywords: [
     'rio carnival 2027 dates',
     'carnaval rio 2027 datas',
@@ -213,6 +218,11 @@ export const reveillon: RioEvent = {
     },
   ],
   hero: '/img/reveillon.svg',
+  photo: {
+    url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Rio_New_Year_Fireworks.jpg?width=1600',
+    credit: 'Wikimedia Commons',
+    license: 'CC BY 2.0',
+  },
   keywords: [
     'reveillon copacabana 2027',
     'rio new years eve',

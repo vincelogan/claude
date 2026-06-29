@@ -1,0 +1,152 @@
+import type { Restaurant } from './types';
+
+export const RESTAURANTS: Restaurant[] = [
+  {
+    slug: 'lasai',
+    name: 'Lasai',
+    neighborhood: 'Botafogo / Humaitá',
+    cuisine: { pt: 'Brasileira contemporânea · degustação', en: 'Contemporary Brazilian · tasting' },
+    michelin: '★★ Michelin (2026)',
+    price: 'luxury',
+    officialUrl: 'https://lasai.com.br/',
+    bookingSlug: 'lasai',
+    hero: '/img/vip.svg',
+    tags: ['tasting-menu', 'farm-driven', 'fine-dining'],
+    blurb: {
+      pt: 'Rafa Costa e Silva trabalha quase só com produtos das próprias hortas, num menu único que muda conforme a colheita. Salão pequeno e ritmo cadenciado — reserve com semanas de antecedência.',
+      en: 'Rafa Costa e Silva works almost entirely from his own gardens, in a single menu that shifts with the harvest. A small room and deliberate pacing — reserve weeks ahead.',
+    },
+  },
+  {
+    slug: 'oro',
+    name: 'Oro',
+    neighborhood: 'Leblon',
+    cuisine: { pt: 'Brasileira moderna · brasa', en: 'Modern Brazilian · live fire' },
+    michelin: '★★ Michelin (2026)',
+    price: 'luxury',
+    officialUrl: 'https://ororestaurante.com.br/',
+    bookingSlug: 'oro',
+    hero: '/img/stay.svg',
+    tags: ['tasting-menu', 'wood-fire', 'fine-dining'],
+    blurb: {
+      pt: 'Felipe Bronze cozinha boa parte do menu na chama viva, numa sequência divertida e levemente teatral de pratos brasileiros. Peça o balcão para ver a cozinha trabalhar.',
+      en: 'Felipe Bronze cooks much of the menu over open flame, in a playful, slightly theatrical sequence of Brazilian courses. Book the counter to watch the line work.',
+    },
+  },
+  {
+    slug: 'oteque',
+    name: 'Oteque',
+    neighborhood: 'Botafogo',
+    cuisine: { pt: 'Frutos do mar · degustação', en: 'Seafood · tasting menu' },
+    michelin: '★ Michelin (2026)',
+    price: 'luxury',
+    officialUrl: 'https://www.oteque.com/',
+    bookingSlug: 'oteque',
+    hero: '/img/vip.svg',
+    tags: ['seafood', 'tasting-menu', 'fine-dining'],
+    blurb: {
+      pt: 'Alberto Landgraf aplica seu estilo preciso e contido a um menu liderado por peixes e frutos do mar, num casarão discreto. Reserva pré-paga.',
+      en: 'Alberto Landgraf channels his precise, restrained style into a seafood-led menu in a discreet townhouse. Pre-paid reservations.',
+    },
+  },
+  {
+    slug: 'madame-olympe',
+    name: 'Madame Olympe',
+    neighborhood: 'Leblon',
+    cuisine: { pt: 'Francesa · brasileira', en: 'French · Brazilian' },
+    michelin: '★ Michelin (2026)',
+    price: 'luxury',
+    bookingSlug: 'madame-olympe',
+    hero: '/img/stay.svg',
+    tags: ['french', 'fine-dining'],
+    blurb: {
+      pt: 'A cozinha de Claude Troisgros com técnica francesa clássica sobre produtos brasileiros, com confiança e sem firula. Salão intimista e serviço atencioso.',
+      en: 'Claude Troisgros’ kitchen brings classical French technique to Brazilian produce with confidence and no fuss. An intimate room and attentive service.',
+    },
+  },
+  {
+    slug: 'aprazivel',
+    name: 'Aprazível',
+    neighborhood: 'Santa Teresa',
+    cuisine: { pt: 'Brasileira · com vista', en: 'Brazilian · with a view' },
+    price: 'high',
+    officialUrl: 'https://www.aprazivel.com.br/',
+    bookingSlug: 'aprazivel',
+    hero: '/img/nightlife.svg',
+    tags: ['view', 'brazilian', 'garden'],
+    blurb: {
+      pt: 'Cozinha brasileira contemporânea num terraço na encosta de Santa Teresa, com uma das melhores vistas do Rio e carta lendária de cachaças. Peça mesa no terraço ao pôr do sol.',
+      en: 'Contemporary Brazilian on a hillside terrace in Santa Teresa, with one of Rio’s best views and a legendary cachaça list. Request a terrace table at sunset.',
+    },
+  },
+  {
+    slug: 'gero',
+    name: 'Gero (Hotel Fasano)',
+    neighborhood: 'Ipanema',
+    cuisine: { pt: 'Italiana', en: 'Italian' },
+    price: 'luxury',
+    hero: '/img/eat.svg',
+    tags: ['italian', 'fasano', 'classic'],
+    blurb: {
+      pt: 'O italiano do grupo Fasano em Ipanema aposta na elegância discreta e na consistência. Massas e grelhados são as escolhas certeiras, com vista para a praia.',
+      en: 'The Fasano group’s Ipanema Italian trades on understated elegance and consistency. Pasta and grilled dishes are the safe bets, with a beach view.',
+    },
+  },
+  {
+    slug: 'confeitaria-colombo',
+    name: 'Confeitaria Colombo',
+    neighborhood: 'Centro',
+    cuisine: { pt: 'Café · confeitaria', en: 'Café · patisserie' },
+    price: 'mid',
+    hero: '/img/eat.svg',
+    tags: ['cafe', 'historic', 'belle-epoque'],
+    blurb: {
+      pt: 'Um café Belle Époque de 1894, que vale tanto pelo salão de espelhos centenário quanto pelos doces e o chá da tarde. Melhor como parada diurna no Centro.',
+      en: 'A Belle Époque café from 1894, worth it as much for the century-old mirrored room as for the pastries and afternoon tea. Best as a daytime stop downtown.',
+    },
+  },
+  {
+    slug: 'fogo-de-chao',
+    name: 'Fogo de Chão',
+    neighborhood: 'Botafogo',
+    cuisine: { pt: 'Churrascaria · rodízio', en: 'Churrascaria · rodízio' },
+    price: 'high',
+    hero: '/img/eat.svg',
+    tags: ['churrascaria', 'rodizio', 'steak'],
+    blurb: {
+      pt: 'Uma churrascaria polida e internacionalmente conhecida, com o rodízio completo de cortes na brasa num ritmo constante. Confiável para um jantar de carne.',
+      en: 'A polished, internationally known churrascaria with the full rodízio of grilled cuts at a steady pace. Reliable for a meat-led dinner.',
+    },
+  },
+  {
+    slug: 'garota-de-ipanema',
+    name: 'Garota de Ipanema',
+    neighborhood: 'Ipanema',
+    cuisine: { pt: 'Boteco brasileiro', en: 'Brazilian bar-restaurant' },
+    price: 'mid',
+    hero: '/img/nightlife.svg',
+    tags: ['botequim', 'historic', 'picanha'],
+    blurb: {
+      pt: 'O bar ligado à música “Garota de Ipanema”, hoje movimentado e turístico. Vá pela picanha na chapa, pela cerveja gelada e pela conexão com a canção.',
+      en: 'The bar tied to “The Girl from Ipanema”, now busy and touristy. Come for the tableside picanha, a cold beer and the link to the song.',
+    },
+  },
+  {
+    slug: 'aconchego-carioca',
+    name: 'Aconchego Carioca',
+    neighborhood: 'Praça da Bandeira',
+    cuisine: { pt: 'Boteco · feijoada', en: 'Botequim · feijoada' },
+    price: 'mid',
+    hero: '/img/eat.svg',
+    tags: ['botequim', 'feijoada', 'local'],
+    blurb: {
+      pt: 'Um boteco celebrado pela comida criativa de bar e pelo famoso bolinho recheado de feijoada. Fica fora dos bairros de praia — vale o táxi por uma cozinha carioca de verdade.',
+      en: 'A celebrated botequim known for inventive bar food and a famous feijoada-stuffed bolinho. Away from the beach neighborhoods — worth the cab for genuine carioca cooking.',
+    },
+  },
+];
+
+const BY_SLUG = new Map(RESTAURANTS.map((r) => [r.slug, r]));
+export function getRestaurant(slug: string) {
+  return BY_SLUG.get(slug);
+}
