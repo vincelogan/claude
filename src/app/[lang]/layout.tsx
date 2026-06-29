@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 import { JsonLd } from '@/components/JsonLd';
 import { SITE, isLocale, type Locale, absoluteUrl } from '@/lib/site';
 import { buildMetadata } from '@/lib/seo';
+import { assetPath } from '@/lib/asset';
 
 const display = Fraunces({
   subsets: ['latin'],
@@ -36,7 +37,7 @@ export function generateMetadata({ params }: { params: { lang: string } }): Meta
       description: SITE.description[locale],
     }),
     icons: {
-      icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+      icon: [{ url: assetPath('/favicon.svg'), type: 'image/svg+xml' }],
     },
     robots: { index: true, follow: true },
   };

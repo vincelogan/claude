@@ -8,6 +8,7 @@ import { JsonLd } from '@/components/JsonLd';
 import { t, pick } from '@/lib/i18n';
 import { SITE, isLocale, type Locale, absoluteUrl } from '@/lib/site';
 import { buildMetadata } from '@/lib/seo';
+import { assetPath } from '@/lib/asset';
 
 export function generateStaticParams() {
   return SITE.locales.flatMap((lang) => allSlugs().map((slug) => ({ lang, slug })));
@@ -93,7 +94,7 @@ export default function GuidePage({ params }: { params: { lang: string; slug: st
       {/* HERO */}
       <header className="relative isolate overflow-hidden bg-night text-white">
         <Image
-          src={guide.hero}
+          src={assetPath(guide.hero)}
           alt={pick(guide.title, locale)}
           fill
           priority

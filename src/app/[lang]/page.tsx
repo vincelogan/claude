@@ -7,6 +7,7 @@ import { JsonLd } from '@/components/JsonLd';
 import { t, pick, type Localized } from '@/lib/i18n';
 import { SITE, isLocale, type Locale } from '@/lib/site';
 import { buildMetadata } from '@/lib/seo';
+import { assetPath } from '@/lib/asset';
 
 const HERO = '/img/hero.svg';
 
@@ -91,7 +92,7 @@ export default function Home({ params }: { params: { lang: string } }) {
       {/* HERO */}
       <section className="relative isolate overflow-hidden bg-night text-white">
         <Image
-          src={HERO}
+          src={assetPath(HERO)}
           alt="Aerial view of Rio de Janeiro with Sugarloaf Mountain and Guanabara Bay"
           fill
           priority

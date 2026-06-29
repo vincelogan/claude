@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Guide } from '@/content';
 import { pick } from '@/lib/i18n';
+import { assetPath } from '@/lib/asset';
 import type { Locale } from '@/lib/site';
 
 export function CategoryCard({
@@ -20,7 +21,7 @@ export function CategoryCard({
     >
       <div className={`relative ${large ? 'aspect-[4/3] sm:aspect-[16/11]' : 'aspect-[4/3]'} overflow-hidden`}>
         <Image
-          src={guide.hero}
+          src={assetPath(guide.hero)}
           alt=""
           fill
           sizes={large ? '(max-width: 640px) 100vw, 50vw' : '(max-width: 640px) 100vw, 25vw'}
