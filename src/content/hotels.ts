@@ -195,6 +195,82 @@ export const HOTELS: Hotel[] = [
       en: 'Don’t expect luxury finishes or amenities — you’re paying for an unbeatable location. Book a sea-facing room.',
     },
   },
+  {
+    slug: 'miramar-by-windsor',
+    name: 'Miramar Hotel by Windsor',
+    neighborhood: 'Copacabana',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    subtype: { pt: 'Clássico · rooftop com vista', en: 'Classic · rooftop with a view' },
+    price: 'high',
+    officialUrl: 'https://www.windsorhoteis.com/',
+    hero: '/img/sightseeing.svg',
+    tags: ['beachfront', 'rooftop-bar', 'views', 'copacabana'],
+    blurb: {
+      pt: 'Opção confiável na orla, perto do lado de Ipanema de Copacabana, famosa pelo rooftop bar com vista panorâmica. Serviço sólido e quartos bem cuidados.',
+      en: 'A reliable beachfront option toward the Ipanema end of Copacabana, best known for a rooftop bar with panoramic views. Solid service and well-kept rooms.',
+    },
+    tradeoff: {
+      pt: 'É clássico, não moderno — para quem quer bom endereço e vista de mar sem preço de grande dama.',
+      en: 'It’s classic rather than cutting-edge — for a good address and sea views without grande-dame prices.',
+    },
+  },
+  {
+    slug: 'portobay-rio-internacional',
+    name: 'PortoBay Rio Internacional',
+    neighborhood: 'Copacabana',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    subtype: { pt: 'Upscale · piscina rooftop', en: 'Upscale · rooftop pool' },
+    price: 'high',
+    officialUrl: 'https://www.portobay.com/en/hotels/hotels-in-brazil/portobay-rio-internacional/',
+    hero: '/img/sightseeing.svg',
+    tags: ['beachfront', 'rooftop-pool', 'views', 'copacabana'],
+    blurb: {
+      pt: 'Torre bem administrada na orla, perto da ponta do Copacabana Palace, com piscina de cobertura e quartos com vista para o mar. Serviço de gestão europeia consistente.',
+      en: 'A well-run beachfront tower near the Copacabana Palace end, with a rooftop pool and ocean-view rooms. The European-managed service feels consistent.',
+    },
+    tradeoff: {
+      pt: 'Você fica no trecho mais agitado da praia — peça andar alto se barulho de rua incomoda.',
+      en: 'You’re on the livelier section of the beach — request a higher floor if street noise is a concern.',
+    },
+  },
+  {
+    slug: 'sheraton-grand-rio',
+    name: 'Sheraton Grand Rio Hotel & Resort',
+    neighborhood: 'Vidigal / Leblon',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    subtype: { pt: 'Resort · praia privativa', en: 'Resort · private beach' },
+    price: 'high',
+    officialUrl: 'https://www.marriott.com/hotels/travel/risi-sheraton-grand-rio-hotel-and-resort/',
+    hero: '/img/stay.svg',
+    tags: ['resort', 'private-beach', 'pools', 'near-leblon'],
+    blurb: {
+      pt: 'O único resort com praia privativa tão perto do Leblon, com piscinas em níveis e estrutura completa. Bom para famílias que querem comodidades de resort perto da Zona Sul.',
+      en: 'The only resort with a private beach this close to Leblon, with tiered pools and full amenities. Great for families wanting resort facilities near the South Zone.',
+    },
+    tradeoff: {
+      pt: 'Fica logo após o Leblon, abaixo do Vidigal — perto da ação, mas você pega táxi para jantar em Ipanema e Leblon.',
+      en: 'It sits just past Leblon below Vidigal — near the action, but you’ll cab into Ipanema and Leblon for dining.',
+    },
+  },
+  {
+    slug: 'hotel-nacional-rio',
+    name: 'Hotel Nacional Rio de Janeiro',
+    neighborhood: 'São Conrado',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    subtype: { pt: 'Marco modernista · de Niemeyer', en: 'Modernist landmark · by Niemeyer' },
+    price: 'mid',
+    officialUrl: 'https://www.hotelnacional.com.br/',
+    hero: '/img/vip.svg',
+    tags: ['niemeyer', 'cylindrical-tower', 'pool', 'views'],
+    blurb: {
+      pt: 'A torre cilíndrica de Oscar Niemeyer é uma atração por si só, sobre a praia de São Conrado, com vistas amplas da costa. Forte custo-benefício no topo do intermediário.',
+      en: 'Oscar Niemeyer’s cylindrical tower is an architecture draw in itself, above São Conrado beach, with sweeping coastal views. Strong value at the upper-mid tier.',
+    },
+    tradeoff: {
+      pt: 'São Conrado é isolado dos principais points da Zona Sul — você depende de táxi para a maioria dos passeios.',
+      en: 'São Conrado is removed from the main South Zone spots — you’ll rely on taxis for most outings.',
+    },
+  },
 ];
 
 const BY_SLUG = new Map(HOTELS.map((h) => [h.slug, h]));

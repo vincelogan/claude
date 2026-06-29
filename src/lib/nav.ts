@@ -77,7 +77,7 @@ export const NAV: NavGroup[] = [
           { href: 'o-que-fazer/escadaria-selaron', label: { pt: 'Escadaria Selarón', en: 'Selarón Steps' } },
           { href: 'o-que-fazer/maracana', label: { pt: 'Maracanã', en: 'Maracanã' } },
           { href: 'o-que-fazer/pedra-do-sal', label: { pt: 'Pedra do Sal (samba)', en: 'Pedra do Sal (samba)' } },
-          { href: 'o-que-fazer/jardim-botanico-parque-lage', label: { pt: 'Jardim Botânico', en: 'Botanical Garden' } },
+          { href: 'bate-volta', label: { pt: 'Bate-voltas', en: 'Day trips' } },
         ],
       },
     ],

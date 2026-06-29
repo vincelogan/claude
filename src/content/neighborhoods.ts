@@ -194,6 +194,189 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     ],
     hero: '/img/things-to-do.svg',
   },
+  {
+    slug: 'urca',
+    name: 'Urca',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Sugarloaf_Mountain%2C_Rio_de_Janeiro%2C_Brazil.jpg?width=1600',
+      credit: 'Donatas Dabravolskas / Wikimedia Commons',
+      license: 'CC BY-SA 4.0',
+    },
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    tagline: { pt: 'Tranquilo, charmoso, ao pé do Pão de Açúcar', en: 'Calm, charming, at the foot of Sugarloaf' },
+    bestFor: { pt: 'Sossego, vistas, pôr do sol', en: 'Quiet, views, sunset' },
+    price: 'high',
+    metaDescription: {
+      pt: 'Urca: um enclave tranquilo ao pé do Pão de Açúcar, com a mureta onde os cariocas tomam cerveja no pôr do sol. Um dos cantos mais seguros do Rio.',
+      en: 'Urca: a tranquil enclave at the foot of Sugarloaf, with the sea wall where locals gather for sunset beers. One of the calmest, safest pockets in Rio.',
+    },
+    intro: [
+      {
+        pt: 'Um bairro minúsculo e tranquilo ao pé do Pão de Açúcar, com a famosa mureta onde os cariocas se reúnem para a cerveja do pôr do sol. Clima de vila e uma das sensações mais seguras da cidade.',
+        en: 'A tiny, tranquil enclave at the foot of Sugarloaf, with the famous sea wall where locals gather for a sunset beer. A village feel and one of the safest atmospheres in the city.',
+      },
+    ],
+    tradeoff: {
+      pt: 'É residencial e pacato, com pouquíssimos hotéis e quase nenhuma vida noturna — você sai para variar de jantar.',
+      en: 'It’s residential and sleepy, with very few hotels and minimal nightlife — you’ll head out for dining variety.',
+    },
+    highlights: [
+      { pt: 'Mureta da Urca ao pôr do sol', en: 'The Urca sea wall at sunset' },
+      { pt: 'Bondinho do Pão de Açúcar ao lado', en: 'Sugarloaf cable car next door' },
+      { pt: 'Trilha do Costão / Pista Cláudio Coutinho', en: 'Cláudio Coutinho coastal trail' },
+    ],
+    hero: '/img/vip.svg',
+  },
+  {
+    slug: 'lapa',
+    name: 'Lapa',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Arcos_da_Lapa_in_Rio_de_Janeiro.jpg?width=1600',
+      credit: 'Rodrigo Soldon / Wikimedia Commons',
+      license: 'CC BY 2.0',
+    },
+    zone: { pt: 'Centro', en: 'Centro' },
+    tagline: { pt: 'O coração da noite e do samba', en: 'The beating heart of nightlife and samba' },
+    bestFor: { pt: 'Vida noturna, samba, música ao vivo', en: 'Nightlife, samba, live music' },
+    price: 'budget',
+    metaDescription: {
+      pt: 'Lapa: o coração da noite carioca sob os Arcos, com casas de samba, música ao vivo e festas de rua no fim de semana. Vá à noite, em grupo, de aplicativo.',
+      en: 'Lapa: the heart of carioca nightlife under the arches, with samba clubs, live music and weekend street parties. Go at night, in a group, by ride app.',
+    },
+    intro: [
+      {
+        pt: 'Sob os icônicos Arcos da Lapa, o bairro pulsa com casas de samba, música ao vivo e festas de rua nos fins de semana. É essencial para quem busca a energia noturna da cidade.',
+        en: 'Under the iconic Lapa arches, the district pulses with samba clubs, live music and weekend street parties. Essential for anyone chasing the city’s nocturnal energy.',
+      },
+    ],
+    tradeoff: {
+      pt: 'É gritante e pode ser inseguro tarde da noite e nas noites lotadas — a maioria sai para a noite em vez de se hospedar ali. Leve pouco e use aplicativo.',
+      en: 'It’s gritty and can be unsafe late and on crowded nights — most visitors come out for the evening rather than stay over. Carry little and use ride apps.',
+    },
+    highlights: [
+      { pt: 'Arcos da Lapa e a Escadaria Selarón', en: 'The Lapa arches and the Selarón Steps' },
+      { pt: 'Rio Scenarium e Carioca da Gema', en: 'Rio Scenarium and Carioca da Gema' },
+      { pt: 'Festa de rua na sexta e no sábado', en: 'Street party on Friday and Saturday' },
+    ],
+    hero: '/img/nightlife.svg',
+  },
+  {
+    slug: 'flamengo',
+    name: 'Flamengo',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    tagline: { pt: 'Residencial, verde e bem conectado', en: 'Residential, green and well connected' },
+    bestFor: { pt: 'Custo-benefício, parques, clima local', en: 'Value, parks, local life' },
+    price: 'mid',
+    metaDescription: {
+      pt: 'Flamengo: bairro residencial e arborizado à beira do Aterro, com ótimo acesso de metrô e bom custo. Prático e autêntico, mas a baía não é de banho.',
+      en: 'Flamengo: a leafy residential district by the bayside park, with great metro links and good value. Practical and authentic, but the bay isn’t for swimming.',
+    },
+    intro: [
+      {
+        pt: 'Bairro arborizado à beira do Aterro do Flamengo — um enorme parque para correr e pedalar — com metrô forte para o resto da cidade. Bom custo e clima de gente de verdade.',
+        en: 'A leafy district fronting Aterro do Flamengo — a vast bayside park for running and cycling — with strong metro links across the city. Good value and an authentic everyday feel.',
+      },
+    ],
+    tradeoff: {
+      pt: 'A água da baía não serve para banho — é uma base bem localizada, não um destino de praia.',
+      en: 'The bay water isn’t suitable for swimming — it’s a well-located base, not a beach destination.',
+    },
+    highlights: [
+      { pt: 'Aterro do Flamengo (parque de Burle Marx)', en: 'Aterro do Flamengo (Burle Marx park)' },
+      { pt: 'MAM — Museu de Arte Moderna', en: 'MAM — Museum of Modern Art' },
+      { pt: 'Metrô e fácil acesso ao Centro', en: 'Metro and easy access to the Centro' },
+    ],
+    hero: '/img/things-to-do.svg',
+  },
+  {
+    slug: 'gavea',
+    name: 'Gávea',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    tagline: { pt: 'Boêmio, jovem e arborizado', en: 'Bohemian, youthful and leafy' },
+    bestFor: { pt: 'Noite universitária, verde, cena local', en: 'Student nightlife, greenery, local scene' },
+    price: 'high',
+    metaDescription: {
+      pt: 'Gávea: bairro nobre e verde perto da Lagoa e do Jardim Botânico, com cena de bares no Baixo Gávea e o Jóquei. Noite local longe das praias turísticas.',
+      en: 'Gávea: an affluent, green neighborhood near the lagoon and botanical garden, with a bar scene at Baixo Gávea and the racetrack. Local nightlife away from the tourist beaches.',
+    },
+    intro: [
+      {
+        pt: 'Bairro nobre e arborizado perto da Lagoa e do Jardim Botânico, com público universitário, o Jóquei e a cena animada do Baixo Gávea. Ideal para a noite local.',
+        en: 'An affluent, leafy neighborhood near the lagoon and botanical garden, with a university crowd, the racetrack and the lively Baixo Gávea square. Ideal for local nightlife.',
+      },
+    ],
+    tradeoff: {
+      pt: 'Hospedagem limitada e sem praia própria — costuma ser combinado com uma estada em Ipanema ou Leblon.',
+      en: 'Limited lodging and no beach of its own — usually combined with a stay in nearby Ipanema or Leblon.',
+    },
+    highlights: [
+      { pt: 'Baixo Gávea (bares e boemia)', en: 'Baixo Gávea (bars and bohemia)' },
+      { pt: 'Instituto Moreira Salles', en: 'Instituto Moreira Salles' },
+      { pt: 'Perto da Lagoa e do Jardim Botânico', en: 'Near the lagoon and Botanical Garden' },
+    ],
+    hero: '/img/nightlife.svg',
+  },
+  {
+    slug: 'jardim-botanico',
+    name: 'Jardim Botânico',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/As_palmeiras_imperiais_do_Jardim_Bot%C3%A2nico_-_Rio_de_Janeiro._%289062349874%29.jpg?width=1600',
+      credit: 'Halley Pacheco de Oliveira / Wikimedia Commons',
+      license: 'CC BY-SA 3.0',
+    },
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    tagline: { pt: 'Verde, tranquilo e gastronômico', en: 'Green, tranquil and food-forward' },
+    bestFor: { pt: 'Natureza, gastronomia, casais', en: 'Nature, dining, couples' },
+    price: 'high',
+    metaDescription: {
+      pt: 'Jardim Botânico: bairro calmo e nobre sob o Corcovado, com o famoso jardim e uma cena gastronômica discreta e excelente. Verde e sereno, sem praia.',
+      en: 'Jardim Botânico: a calm, upscale neighborhood under Corcovado, with its famous garden and a quietly excellent dining scene. Green and serene, no beach.',
+    },
+    intro: [
+      {
+        pt: 'Bairro calmo e nobre sob o Corcovado, que une o verde do jardim botânico a uma cena gastronômica discretamente excelente. Para quem quer natureza, boa comida e sossego perto da Lagoa.',
+        en: 'A calm, upscale district under Corcovado that pairs the greenery of its botanical garden with a quietly excellent restaurant scene. For nature, good food and peace near the lagoon.',
+      },
+    ],
+    tradeoff: {
+      pt: 'É um bairro interno, sem praia e com poucos hotéis — conte com viagens curtas até a orla.',
+      en: 'It’s inland with no beach and few hotels — plan on short rides to the coast.',
+    },
+    highlights: [
+      { pt: 'Jardim Botânico (palmeiras imperiais)', en: 'Botanical Garden (imperial palms)' },
+      { pt: 'Parque Lage e o café com vista do Cristo', en: 'Parque Lage and the café under Christ' },
+      { pt: 'Restaurantes de bairro premiados', en: 'Award-winning neighborhood restaurants' },
+    ],
+    hero: '/img/things-to-do.svg',
+  },
+  {
+    slug: 'lagoa',
+    name: 'Lagoa',
+    zone: { pt: 'Zona Sul', en: 'South Zone' },
+    tagline: { pt: 'Ativa, cênica e à beira da água', en: 'Active, scenic and waterside' },
+    bestFor: { pt: 'Corrida e bike, vistas, quiosques', en: 'Running & cycling, views, kiosks' },
+    price: 'high',
+    metaDescription: {
+      pt: 'Lagoa: o anel em volta da Lagoa Rodrigo de Freitas, com pista de corrida e bike, quiosques à beira-d’água e o Corcovado ao fundo. Cênico e ativo.',
+      en: 'Lagoa: the ring around the Rodrigo de Freitas lagoon, with a running-and-cycling path, waterside kiosks and Corcovado behind. Scenic and active.',
+    },
+    intro: [
+      {
+        pt: 'O bairro cerca a Lagoa Rodrigo de Freitas, com uma pista de 7,5 km para corrida e bike e quiosques à beira-d’água, emoldurada por montanhas e pelo Cristo. Para quem gosta de cenário e movimento entre as praias.',
+        en: 'The district rings the Rodrigo de Freitas lagoon, with a 7.5 km running-and-cycling path and waterside kiosks, framed by mountains and Christ the Redeemer. For those who value scenery and recreation between the beaches.',
+      },
+    ],
+    tradeoff: {
+      pt: 'A água da lagoa não é de banho e há poucos hotéis — a maioria curte de dia, vindo de um bairro de praia.',
+      en: 'The lagoon water isn’t for swimming and hotels are few — most enjoy it by day from a beach base.',
+    },
+    highlights: [
+      { pt: 'Pista de 7,5 km ao redor da Lagoa', en: 'The 7.5 km loop around the lagoon' },
+      { pt: 'Quiosques à beira-d’água ao entardecer', en: 'Waterside kiosks at dusk' },
+      { pt: 'Aluguel de bike no lado de Ipanema', en: 'Bike rental on the Ipanema side' },
+    ],
+    hero: '/img/sightseeing.svg',
+  },
 ];
 
 const BY_SLUG = new Map(NEIGHBORHOODS.map((n) => [n.slug, n]));

@@ -4,6 +4,8 @@ export { NEIGHBORHOODS, getNeighborhood } from './neighborhoods';
 export { HOTELS, getHotel } from './hotels';
 export { RESTAURANTS, getRestaurant } from './restaurants';
 export { ATTRACTIONS, ATTRACTION_CATEGORIES, getAttraction } from './attractions';
+export { DAYTRIPS } from './daytrips';
+export type { DayTrip } from './daytrips';
 export { EAT_INTRO, EAT_SECTIONS, EAT_FAQS } from './eat';
 export { VIP_INTRO, VIP_SECTIONS } from './vip';
 export { ESSENTIALS, PLAN_SECTIONS, FAQS } from './plan';

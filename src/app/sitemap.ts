@@ -8,7 +8,7 @@ export const dynamic = 'force-static';
 
 // All routes (Portuguese slugs, shared across locales).
 function paths(): string[] {
-  const base = ['', 'onde-ficar', 'hoteis', 'o-que-fazer', 'onde-comer', 'vip', 'planejar', 'sobre'];
+  const base = ['', 'onde-ficar', 'hoteis', 'o-que-fazer', 'bate-volta', 'onde-comer', 'vip', 'planejar', 'sobre'];
   const events = EVENTS.map((e) => e.slug);
   const bairros = NEIGHBORHOODS.map((n) => `onde-ficar/${n.slug}`);
   const attractions = ATTRACTIONS.map((a) => `o-que-fazer/${a.slug}`);
