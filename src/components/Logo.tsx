@@ -28,12 +28,22 @@ export function Logo({
 }
 
 function Mark() {
+  // Dois Irmãos peaks in gold on charcoal (brand mark).
   return (
-    <svg width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true" className="shrink-0">
-      <circle cx="20" cy="20" r="20" fill="#0B3D2E" />
-      <circle cx="20" cy="17" r="7.5" fill="#E0B765" />
-      <path d="M2 31c4-1 6-9 9-9s4 5 7 5 5-11 9-11 6 14 11 15v6H2z" fill="#12513C" />
-      <path d="M2 33c5-1 9-6 12-6s5 4 9 4 6-7 10-7 4 6 6 7v3H2z" fill="#0B3D2E" />
+    <svg width="38" height="38" viewBox="0 0 40 40" fill="none" aria-hidden="true" className="shrink-0">
+      <rect width="40" height="40" rx="9" fill="#1C1C1C" />
+      <g
+        fill="none"
+        stroke="#C5A059"
+        strokeWidth="2.2"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        transform="translate(6 7) scale(0.24)"
+      >
+        <path d="M24 86 L52 30 L74 86 Z" />
+        <path d="M64 86 L86 46 L104 86 Z" />
+        <line x1="18" y1="92" x2="102" y2="92" strokeWidth="1.6" />
+      </g>
     </svg>
   );
 }

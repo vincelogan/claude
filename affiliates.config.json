@@ -1,0 +1,23 @@
+{
+  "_comment": "Affiliate/partner redirect map for /go/<slug>. Replace each TODO_AFFILIATE_URL with the real affiliate or partner link. Postbuild generates a static redirect page per slug into out/go/<slug>/. Until filled, a slug redirects to the homepage. Keep slugs in sync with the CTAs in the app.",
+  "redirects": {
+    "carnival-tickets": "TODO_AFFILIATE_URL",
+    "reveillon": "TODO_AFFILIATE_URL",
+    "cristo-tickets": "TODO_AFFILIATE_URL",
+    "sugarloaf-tickets": "TODO_AFFILIATE_URL",
+    "copacabana-palace": "TODO_AFFILIATE_URL",
+    "fasano": "TODO_AFFILIATE_URL",
+    "emiliano": "TODO_AFFILIATE_URL",
+    "janeiro": "TODO_AFFILIATE_URL",
+    "grand-hyatt": "TODO_AFFILIATE_URL",
+    "lasai": "TODO_AFFILIATE_URL",
+    "oro": "TODO_AFFILIATE_URL",
+    "oteque": "TODO_AFFILIATE_URL",
+    "madame-olympe": "TODO_AFFILIATE_URL",
+    "aprazivel": "TODO_AFFILIATE_URL",
+    "helicopter": "TODO_AFFILIATE_URL",
+    "yacht": "TODO_AFFILIATE_URL",
+    "transfer": "TODO_AFFILIATE_URL",
+    "concierge": "TODO_AFFILIATE_URL"
+  }
+}

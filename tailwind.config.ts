@@ -5,21 +5,25 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Editorial luxury palette — warm, light, photography-first.
-        bone: '#F7F3EC',
-        cloud: '#FCFAF5',
-        ink: '#15120E',
-        mata: { DEFAULT: '#0B3D2E', soft: '#12513C' },
-        amber: { DEFAULT: '#C99A3B', soft: '#E0B765' },
-        coral: '#E15A3C',
-        sand: '#E8DFCF',
+        // Charcoal + gold luxury palette (handoff v2.0).
+        // Token names kept stable so components re-skin via the map below:
+        //   mata  = the dark brand surface (charcoal)
+        //   amber = the gold accent
+        //   coral = secondary accent (deep gold)
+        bone: '#FBFAF7', // page background (paper)
+        cloud: '#FFFFFF', // cards over the paper
+        ink: '#1C1C1C', // primary text / charcoal
+        mata: { DEFAULT: '#1C1C1C', soft: '#252118' }, // dark sections, footer, hero
+        amber: { DEFAULT: '#C5A059', soft: '#D9BC7E', deep: '#A07E3D' }, // gold
+        coral: '#A07E3D', // secondary accent → deep gold
+        sand: '#EFEADF', // subtle surfaces / borders
       },
       fontFamily: {
         display: ['var(--font-display)', 'Georgia', 'serif'],
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
       },
       maxWidth: {
-        content: '1240px',
+        content: '1200px',
       },
       keyframes: {
         'fade-up': {

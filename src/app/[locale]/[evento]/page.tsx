@@ -10,6 +10,7 @@ import { JsonLd } from '@/components/JsonLd';
 import { t, pick } from '@/lib/i18n';
 import { SITE, isLocale, htmlLang, type Locale, absoluteUrl } from '@/lib/site';
 import { buildMetadata } from '@/lib/seo';
+import { assetPath } from '@/lib/asset';
 
 export function generateStaticParams() {
   return SITE.locales.flatMap((locale) => EVENTS.map((e) => ({ locale, evento: e.slug })));
@@ -36,6 +37,16 @@ export default function EventPage({ params }: { params: { locale: string; evento
   if (!event) notFound();
   const locale = params.locale as Locale;
   const home = `/${locale}`;
+
+  const isCarnaval = event.slug === 'carnaval';
+  const goSlug = isCarnaval ? 'carnival-tickets' : 'reveillon';
+  const buyLabel = isCarnaval
+    ? locale === 'pt'
+      ? 'Comprar camarote'
+      : 'Buy camarote tickets'
+    : locale === 'pt'
+    ? 'Reservar Réveillon'
+    : 'Book a Réveillon gala';
 
   const eventLd = {
     '@context': 'https://schema.org',
@@ -76,7 +87,12 @@ export default function EventPage({ params }: { params: { locale: string; evento
             <p className="eyebrow">{pick(event.nav, locale)}</p>
             <p className="mt-2 font-display text-xl font-semibold">{pick(event.dateLabel, locale)}</p>
           </div>
-          <Countdown to={event.countdownTo} locale={locale} />
+          <div className="flex flex-col items-start gap-4 sm:items-end">
+            <Countdown to={event.countdownTo} locale={locale} />
+            <a href={assetPath(`/go/${goSlug}`)} rel="sponsored nofollow" className="btn-vip">
+              {buyLabel} →
+            </a>
+          </div>
         </div>
 
         <div className="mt-12 max-w-2xl space-y-5 text-lg prose-rio">

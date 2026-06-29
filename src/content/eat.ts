@@ -94,6 +94,7 @@ export const EAT_SECTIONS: Section[] = [
         name: 'Lasai',
         area: 'Botafogo',
         price: 'luxury',
+        bookingSlug: 'lasai',
         blurb: {
           pt: 'Duas estrelas Michelin e o restaurante brasileiro mais bem colocado no World’s 50 Best. Menu-degustação da horta ao balcão, do chef Rafa Costa e Silva.',
           en: 'Two Michelin stars and the top-ranked Brazilian restaurant on World’s 50 Best. A garden-to-counter tasting menu by chef Rafa Costa e Silva.',
@@ -103,6 +104,7 @@ export const EAT_SECTIONS: Section[] = [
         name: 'Oteque',
         area: 'Botafogo',
         price: 'luxury',
+        bookingSlug: 'oteque',
         blurb: {
           pt: 'Menu-degustação de alta gastronomia do mar com estrela Michelin, do chef Alberto Landgraf.',
           en: 'A Michelin-starred seafood haute-cuisine tasting menu by chef Alberto Landgraf.',
@@ -112,6 +114,7 @@ export const EAT_SECTIONS: Section[] = [
         name: 'Aprazível',
         area: 'Santa Teresa',
         price: 'high',
+        bookingSlug: 'aprazivel',
         blurb: {
           pt: 'Cozinha brasileira contemporânea num terraço na encosta, com uma das melhores vistas do Rio e lista lendária de cachaças.',
           en: 'Contemporary Brazilian cooking on a hillside terrace with one of Rio’s best views and a legendary cachaça list.',

@@ -2,7 +2,7 @@
 // .nojekyll marker so GitHub Pages serves Next's _next/ folder untouched.
 // The site lives under /en and /pt; visitors landing on "/" are sent to the
 // locale that matches their browser, defaulting to English.
-import { writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { writeFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const OUT = join(process.cwd(), 'out');
@@ -38,4 +38,37 @@ const html = `<!doctype html>
 
 writeFileSync(join(OUT, 'index.html'), html, 'utf8');
 writeFileSync(join(OUT, '.nojekyll'), '', 'utf8');
-console.log(`✓ postbuild: wrote out/index.html (base "${base || '/'}") + .nojekyll`);
+
+// --- /go/<slug> affiliate redirect layer ---------------------------------
+// Generates a static redirect page per slug from affiliates.config.json.
+// Slugs still set to TODO fall back to the homepage so links never dead-end.
+let goCount = 0;
+try {
+  const cfg = JSON.parse(readFileSync(join(process.cwd(), 'affiliates.config.json'), 'utf8'));
+  const redirects = cfg.redirects || {};
+  const fallback = `${base}/pt/`;
+  for (const [slug, url] of Object.entries(redirects)) {
+    const target = !url || url === 'TODO_AFFILIATE_URL' ? fallback : url;
+    const dir = join(OUT, 'go', slug);
+    mkdirSync(dir, { recursive: true });
+    const page = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<title>Redirecting…</title>
+<link rel="canonical" href="${target}">
+<meta http-equiv="refresh" content="0; url=${target}">
+<script>location.replace(${JSON.stringify(target)});</script>
+</head>
+<body><p>Redirecting to <a href="${target}">your destination</a>…</p></body>
+</html>
+`;
+    writeFileSync(join(dir, 'index.html'), page, 'utf8');
+    goCount++;
+  }
+} catch (err) {
+  console.warn('! postbuild: could not generate /go redirects:', err.message);
+}
+
+console.log(`✓ postbuild: index.html (base "${base || '/'}") + .nojekyll + ${goCount} /go redirects`);

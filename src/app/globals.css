@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
 }
 
 @layer base {
@@ -50,8 +50,8 @@
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber/70 focus-visible:ring-offset-bone;
   }
-  .btn-primary { @apply btn bg-coral text-white hover:bg-coral/90; }
-  .btn-vip { @apply btn bg-amber text-ink hover:bg-amber-soft; }
+  .btn-primary { @apply btn bg-amber text-ink hover:bg-amber-deep hover:text-white; }
+  .btn-vip { @apply btn bg-amber text-ink hover:bg-amber-deep hover:text-white; }
   .btn-dark { @apply btn bg-mata text-white hover:bg-mata-soft; }
   .btn-outline { @apply btn border border-ink/20 text-ink hover:border-ink/50 hover:bg-ink/5; }
   .btn-ghost-light { @apply btn border border-white/30 text-white hover:bg-white/10; }

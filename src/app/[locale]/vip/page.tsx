@@ -6,6 +6,14 @@ import { ConciergeForm } from '@/components/ConciergeForm';
 import { t, pick, type Localized } from '@/lib/i18n';
 import { SITE, isLocale, type Locale } from '@/lib/site';
 import { buildMetadata } from '@/lib/seo';
+import { assetPath } from '@/lib/asset';
+
+const VIP_BOOKINGS: { slug: string; label: Localized }[] = [
+  { slug: 'helicopter', label: { pt: '🚁 Voo de helicóptero', en: '🚁 Helicopter flight' } },
+  { slug: 'yacht', label: { pt: '⛵ Iate privativo', en: '⛵ Private yacht' } },
+  { slug: 'transfer', label: { pt: '🚗 Transfer de luxo', en: '🚗 Luxury transfer' } },
+  { slug: 'carnival-tickets', label: { pt: '🎭 Camarote de Carnaval', en: '🎭 Carnival camarote' } },
+];
 
 const title: Localized = { pt: 'Experiências VIP & Concierge', en: 'VIP Experiences & Concierge' };
 const lede: Localized = {
@@ -41,6 +49,19 @@ export default function VipPage({ params }: { params: { locale: string } }) {
       />
       <div className="container-rio py-16">
         <p className="max-w-2xl text-lg text-ink/75">{pick(VIP_INTRO, locale)}</p>
+
+        <div className="mt-6 flex flex-wrap gap-2.5">
+          {VIP_BOOKINGS.map((b) => (
+            <a
+              key={b.slug}
+              href={assetPath(`/go/${b.slug}`)}
+              rel="sponsored nofollow"
+              className="rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink transition hover:border-amber hover:bg-cloud"
+            >
+              {pick(b.label, locale)}
+            </a>
+          ))}
+        </div>
 
         {VIP_SECTIONS.map((s) => (
           <section key={s.id} id={s.id} className="mt-14 scroll-mt-24">

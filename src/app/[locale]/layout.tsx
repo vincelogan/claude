@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Fraunces, Hanken_Grotesk } from 'next/font/google';
+import { Cormorant_Garamond, Inter } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import '../globals.css';
 import { Header } from '@/components/Header';
@@ -9,16 +9,16 @@ import { SITE, isLocale, htmlLang, type Locale, absoluteUrl } from '@/lib/site';
 import { buildMetadata } from '@/lib/seo';
 import { assetPath } from '@/lib/asset';
 
-const display = Fraunces({
+const display = Cormorant_Garamond({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['500', '600', '700'],
   variable: '--font-display',
   display: 'swap',
 });
 
-const sans = Hanken_Grotesk({
+const sans = Inter({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['300', '400', '500', '600'],
   variable: '--font-sans',
   display: 'swap',
 });
@@ -36,7 +36,7 @@ export function generateMetadata({ params }: { params: { locale: string } }): Me
       title: `${SITE.name} — ${SITE.tagline[locale]}`,
       description: SITE.description[locale],
     }),
-    icons: { icon: [{ url: assetPath('/favicon.svg'), type: 'image/svg+xml' }] },
+    icons: { icon: [{ url: assetPath('/logo-mark.svg'), type: 'image/svg+xml' }] },
     robots: { index: true, follow: true },
   };
 }
@@ -60,6 +60,15 @@ export default function LocaleLayout({
     touristType: ['Beach', 'Culture', 'Nightlife', 'Luxury'],
     geo: { '@type': 'GeoCoordinates', latitude: -22.9068, longitude: -43.1729 },
   };
+  const orgLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SITE.name,
+    url: SITE.url,
+    logo: `${SITE.url}/logo.svg`,
+    description: SITE.description[locale],
+    sameAs: Object.values(SITE.social),
+  };
   const siteLd = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -76,7 +85,7 @@ export default function LocaleLayout({
   return (
     <html lang={htmlLang(locale)} className={`${display.variable} ${sans.variable}`}>
       <body>
-        <JsonLd data={[destinationLd, siteLd]} />
+        <JsonLd data={[orgLd, destinationLd, siteLd]} />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-mata focus:px-4 focus:py-2 focus:text-white"

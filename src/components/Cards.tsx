@@ -136,6 +136,15 @@ export function ItemCard({ item, locale }: { item: Item; locale: Locale }) {
           {pick(item.tip, locale)}
         </p>
       )}
+      {item.bookingSlug && (
+        <a
+          href={assetPath(`/go/${item.bookingSlug}`)}
+          rel="sponsored nofollow"
+          className="mt-4 inline-block self-start text-xs font-semibold uppercase tracking-wider text-amber-deep transition hover:text-ink"
+        >
+          {t('cta.reserve', locale)} →
+        </a>
+      )}
     </div>
   );
 }

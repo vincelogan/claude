@@ -24,6 +24,7 @@ const DICT = {
   'cta.explore': { pt: 'Explorar o Rio', en: 'Explore Rio' },
   'cta.plan': { pt: 'Planejar a viagem', en: 'Plan your trip' },
   'cta.more': { pt: 'Saiba mais', en: 'Learn more' },
+  'cta.reserve': { pt: 'Reservar', en: 'Reserve' },
   'cta.viewAll': { pt: 'Ver todos', en: 'View all' },
   'cta.seeNeighborhoods': { pt: 'Ver todos os bairros', en: 'See all neighborhoods' },
   'cta.seeThingsToDo': { pt: 'Ver o que fazer', en: 'See things to do' },

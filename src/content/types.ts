@@ -11,6 +11,8 @@ export interface Item {
   tip?: Localized;
   price?: PriceLevel;
   tags?: string[];
+  /** Optional /go/<slug> affiliate/booking redirect for a reserve CTA */
+  bookingSlug?: string;
 }
 
 export interface Section {
