@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" fill="none">
+  <defs>
+    <linearGradient id="sky0" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a2a3a"/>
+      <stop offset="1" stop-color="#071a24"/>
+    </linearGradient>
+    <radialGradient id="sun0" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#e6b34a" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#e6b34a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="haze0" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#071a24" stop-opacity="0"/>
+      <stop offset="1" stop-color="#071a24" stop-opacity="0.5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#sky0)"/>
+  <circle cx="1120" cy="340" r="340" fill="url(#sun0)"/>
+  <circle cx="1120" cy="340" r="110" fill="#e6b34a" fill-opacity="0.9"/>
+  <!-- far mountains -->
+  <path d="M0 740 L0 500 Q 192 340 352 500 Q 480 600 640 460 Q 800 320 960 500 L1600 520 L1600 740 Z" fill="#0f8aa6" fill-opacity="0.85"/>
+  <!-- Sugarloaf dome (right) -->
+  <path d="M1248 740 Q 1280 420 1376 400 Q 1472 420 1504 740 Z" fill="#0a5e72"/>
+  <!-- Two Brothers peaks (left) -->
+  <path d="M0 740 L0 560 L160 400 L288 560 L416 440 L544 740 Z" fill="#0a5e72"/>
+  <!-- Christ silhouette on central peak -->
+  <g fill="#e6b34a" fill-opacity="0.92" transform="translate(800 300)">
+    <rect x="-1.5" y="0" width="3" height="22"/>
+    <rect x="-11" y="6" width="22" height="3"/>
+    <circle cx="0" cy="-3" r="3"/>
+  </g>
+  <path d="M736 345 L800 310 L864 345 L927.9999999999999 740 L672 740 Z" fill="#0a5e72"/>
+  <!-- sea -->
+  <rect y="740" width="1600" height="260" fill="#06343f"/>
+  <path d="M0 740 Q 400 732 800 740 T 1600 740 L1600 750 L0 750 Z" fill="#e6b34a" fill-opacity="0.18"/>
+  <rect width="1600" height="1000" fill="url(#haze0)"/>
+</svg>

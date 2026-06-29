@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-sand text-night font-sans antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+    text-wrap: balance;
+  }
+  ::selection {
+    @apply bg-gold/30 text-night;
+  }
+}
+
+@layer components {
+  .container-rio {
+    @apply mx-auto w-full max-w-content px-5 sm:px-8;
+  }
+
+  /* Eyebrow / kicker label */
+  .kicker {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-ocean-deep;
+  }
+
+  /* Primary gold button */
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gold px-6 py-3 text-sm font-semibold text-night shadow-sm transition hover:bg-gold-light focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60;
+  }
+
+  /* Ghost button on dark */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-night/15 px-5 py-2.5 text-sm font-semibold text-night transition hover:border-night/40 hover:bg-night/5;
+  }
+
+  /* Card — add the `group` class in markup alongside `card` when child hover effects are needed */
+  .card {
+    @apply relative overflow-hidden rounded-2xl border border-night/10 bg-white shadow-[0_1px_3px_rgba(7,26,36,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_40px_-12px_rgba(7,26,36,0.25)];
+  }
+
+  /* Subtle tropical gradient text */
+  .text-gradient {
+    @apply bg-gradient-to-r from-gold via-coral to-ocean-light bg-clip-text text-transparent;
+  }
+}
+
+/* Hide scrollbar for horizontal scrollers */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

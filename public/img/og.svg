@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="sky99" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a2a3a"/>
+      <stop offset="1" stop-color="#071a24"/>
+    </linearGradient>
+    <radialGradient id="sun99" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#e6b34a" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#e6b34a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="haze99" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#071a24" stop-opacity="0"/>
+      <stop offset="1" stop-color="#071a24" stop-opacity="0.5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#sky99)"/>
+  <circle cx="840" cy="214.20000000000002" r="214.20000000000002" fill="url(#sun99)"/>
+  <circle cx="840" cy="214.20000000000002" r="69.3" fill="#e6b34a" fill-opacity="0.9"/>
+  <!-- far mountains -->
+  <path d="M0 466.2 L0 315 Q 144 214.20000000000002 264 315 Q 360 378 480 289.8 Q 600 201.6 720 315 L1200 327.6 L1200 466.2 Z" fill="#0f8aa6" fill-opacity="0.85"/>
+  <!-- Sugarloaf dome (right) -->
+  <path d="M936 466.2 Q 960 264.59999999999997 1032 252 Q 1104 264.59999999999997 1128 466.2 Z" fill="#0a5e72"/>
+  <!-- Two Brothers peaks (left) -->
+  <path d="M0 466.2 L0 352.8 L120 252 L216 352.8 L312 277.2 L408.00000000000006 466.2 Z" fill="#0a5e72"/>
+  <!-- Christ silhouette on central peak -->
+  <g fill="#e6b34a" fill-opacity="0.92" transform="translate(600 189)">
+    <rect x="-1.5" y="0" width="3" height="22"/>
+    <rect x="-11" y="6" width="22" height="3"/>
+    <circle cx="0" cy="-3" r="3"/>
+  </g>
+  <path d="M552 217.35 L600 195.3 L648 217.35 L696 466.2 L504 466.2 Z" fill="#0a5e72"/>
+  <!-- sea -->
+  <rect y="466.2" width="1200" height="163.8" fill="#06343f"/>
+  <path d="M0 466.2 Q 300 458.2 600 466.2 T 1200 466.2 L1200 476.2 L0 476.2 Z" fill="#e6b34a" fill-opacity="0.18"/>
+  <rect width="1200" height="630" fill="url(#haze99)"/>
+</svg>
