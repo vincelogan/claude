@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
-import { SITE, type Locale, absoluteUrl } from './site';
+import { SITE, type Locale, absoluteUrl, ogLocale } from './site';
 
 interface PageSeo {
   locale: Locale;
-  path?: string; // path after locale, e.g. 'carnaval'
+  path?: string;
   title: string;
   description: string;
   keywords?: string[];
@@ -11,7 +11,7 @@ interface PageSeo {
   type?: 'website' | 'article';
 }
 
-// Builds consistent metadata with canonical + hreflang alternates for both locales.
+// Consistent metadata with canonical + hreflang alternates for both locales.
 export function buildMetadata({
   locale,
   path = '',
@@ -27,19 +27,17 @@ export function buildMetadata({
     : `${SITE.url}${SITE.ogImage}`;
   const ogImage = image ?? fallbackImage;
 
-  const languages: Record<string, string> = {
-    en: absoluteUrl('en', path),
-    pt: absoluteUrl('pt', path),
-    'x-default': absoluteUrl(SITE.defaultLocale, path),
-  };
-
   return {
     title,
     description,
     keywords,
     alternates: {
       canonical,
-      languages,
+      languages: {
+        'pt-BR': absoluteUrl('pt', path),
+        en: absoluteUrl('en', path),
+        'x-default': absoluteUrl(SITE.defaultLocale, path),
+      },
     },
     openGraph: {
       type,
@@ -47,7 +45,7 @@ export function buildMetadata({
       description,
       url: canonical,
       siteName: SITE.name,
-      locale: locale === 'pt' ? 'pt_BR' : 'en_US',
+      locale: ogLocale(locale),
       images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
     },
     twitter: {

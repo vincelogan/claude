@@ -2,18 +2,15 @@ import type { Localized } from '@/lib/i18n';
 
 export type PriceLevel = 'budget' | 'mid' | 'high' | 'luxury';
 
-export type GuideGroup = 'experience' | 'plan';
-
+/** A reusable list item (dish, venue, tip, etc.) */
 export interface Item {
-  name: string; // proper nouns stay as-is (not translated)
+  name: string; // proper nouns kept as-is
   blurb: Localized;
-  area?: string; // neighborhood / location
+  area?: string;
   bestFor?: Localized;
   tip?: Localized;
   price?: PriceLevel;
   tags?: string[];
-  /** Optional external official link */
-  link?: string;
 }
 
 export interface Section {
@@ -28,27 +25,65 @@ export interface FAQ {
   a: Localized;
 }
 
-export interface Guide {
-  slug: string; // URL segment (shared across locales)
-  group: GuideGroup;
-  /** Short emoji used as a lightweight icon */
+/** A featured event (Carnaval, Réveillon) shown on the home + pillar pages. */
+export interface RioEvent {
+  slug: string;
   icon: string;
-  nav: Localized; // short nav label
-  title: Localized; // H1
-  /** SEO meta title (<= ~60 chars). Falls back to title if absent. */
-  metaTitle?: Localized;
-  /** SEO meta description (~150-160 chars) */
+  name: Localized;
+  nav: Localized;
+  /** ISO date the countdown targets (start of the headline night). */
+  countdownTo: string; // 'YYYY-MM-DDTHH:mm:ssZ'
+  dateLabel: Localized; // human readable date range
+  /** Multi-line schedule fragments for the pillar page */
+  metaTitle: Localized;
   metaDescription: Localized;
-  /** Hero one-liner under the H1 */
   lede: Localized;
-  /** 1-2 paragraph intro (supports plain text) */
   intro: Localized[];
-  /** Unsplash hero image (royalty-free). Replace with branded/AI imagery in production. */
   hero: string;
-  heroCredit?: string;
-  /** Keywords this page targets (for internal reference + meta keywords) */
   keywords: string[];
   sections: Section[];
+  faqs: FAQ[];
+  /** schema.org Event fields */
+  schema: {
+    startDate: string;
+    endDate: string;
+    location: string;
+  };
+}
+
+/** A neighborhood (hub + detail template). */
+export interface Neighborhood {
+  slug: string;
+  name: string;
+  zone: Localized; // e.g. "Zona Sul"
+  tagline: Localized;
+  bestFor: Localized;
+  metaDescription: Localized;
+  intro: Localized[];
+  /** honest trade-off — the credibility signal */
+  tradeoff: Localized;
+  highlights: Localized[]; // bullet list
+  hero: string;
+  price: PriceLevel;
   faqs?: FAQ[];
-  related?: string[]; // slugs
+}
+
+export type AttractionCategory = 'icones' | 'praias' | 'natureza' | 'cultura' | 'vida-noturna';
+
+/** An attraction / thing to do (hub + detail template). */
+export interface Attraction {
+  slug: string;
+  name: string;
+  category: AttractionCategory;
+  area: string;
+  tagline: Localized;
+  metaDescription: Localized;
+  intro: Localized[];
+  howToGet: Localized;
+  bestTime: Localized;
+  costNote: Localized;
+  tip: Localized;
+  hero: string;
+  keywords: string[];
+  faqs?: FAQ[];
 }

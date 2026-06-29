@@ -3,27 +3,26 @@
 export const SITE = {
   domain: 'riodejaneiro.vip',
   url: 'https://riodejaneiro.vip',
-  name: 'Rio de Janeiro VIP',
-  shortName: 'Rio VIP',
-  // Bilingual taglines
+  name: 'riodejaneiro.vip',
+  shortName: 'Rio.vip',
   tagline: {
-    en: 'The Marvelous City, unlocked.',
-    pt: 'A Cidade Maravilhosa, do seu jeito.',
+    pt: 'O melhor do Rio, num só lugar.',
+    en: 'The best of Rio, in one place.',
   },
   description: {
-    en: 'The premium insider guide to Rio de Janeiro — Carnival, Réveillon, nightlife, the best beaches, where to stay and eat, VIP experiences, plus honest safety and travel info for foreigners and Brazilians alike.',
-    pt: 'O guia premium do Rio de Janeiro — Carnaval, Réveillon, vida noturna, as melhores praias, onde se hospedar e comer, experiências VIP, além de informações honestas de segurança e viagem.',
+    pt: 'Carnaval, Réveillon, praias, hospedagem, gastronomia e experiências exclusivas no Rio de Janeiro — com tudo o que você precisa saber antes de chegar.',
+    en: 'Carnival, New Year’s, beaches, hotels, food and exclusive experiences in Rio de Janeiro — plus everything you need to know before you land.',
   },
   email: 'concierge@riodejaneiro.vip',
-  locales: ['en', 'pt'] as const,
-  defaultLocale: 'en' as const,
+  // pt-BR is the default locale (served at the root after redirect); en lives under /en.
+  locales: ['pt', 'en'] as const,
+  defaultLocale: 'pt' as const,
+  updatedYear: 2026,
   social: {
     instagram: 'https://instagram.com/riodejaneiro.vip',
     youtube: 'https://youtube.com/@riodejaneiro.vip',
     tiktok: 'https://tiktok.com/@riodejaneiro.vip',
   },
-  // Default social-share image. SVG placeholder ships by default; replace with a
-  // branded/AI-generated 1200×630 raster (e.g. /img/og.jpg) for best social previews.
   ogImage: '/img/og.svg',
 } as const;
 
@@ -33,11 +32,15 @@ export function isLocale(value: string): value is Locale {
   return (SITE.locales as readonly string[]).includes(value);
 }
 
-export function localeName(l: Locale): string {
-  return l === 'pt' ? 'Português' : 'English';
+export function htmlLang(l: Locale): string {
+  return l === 'pt' ? 'pt-BR' : 'en';
 }
 
-// Build a canonical absolute URL for a given locale + path.
+export function ogLocale(l: Locale): string {
+  return l === 'pt' ? 'pt_BR' : 'en_US';
+}
+
+// Canonical absolute URL for a locale + path (path uses Portuguese slugs).
 export function absoluteUrl(locale: Locale, path = ''): string {
   const clean = path.replace(/^\/+|\/+$/g, '');
   const segs = [locale, clean].filter(Boolean).join('/');

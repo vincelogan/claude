@@ -5,42 +5,30 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Rio brand palette — ocean night, sunset gold, tropical accents
-        night: {
-          DEFAULT: '#071a24',
-          50: '#0c2734',
-          100: '#0a212c',
-          900: '#04121a',
-        },
-        ocean: {
-          DEFAULT: '#0f8aa6',
-          light: '#22b8d6',
-          deep: '#0a5e72',
-        },
-        gold: {
-          DEFAULT: '#e6b34a',
-          light: '#f3cd7a',
-          deep: '#c4912f',
-        },
-        coral: '#ef6f5b',
-        jungle: '#1f8a5b',
-        sand: '#f6efe4',
+        // Editorial luxury palette — warm, light, photography-first.
+        bone: '#F7F3EC',
+        cloud: '#FCFAF5',
+        ink: '#15120E',
+        mata: { DEFAULT: '#0B3D2E', soft: '#12513C' },
+        amber: { DEFAULT: '#C99A3B', soft: '#E0B765' },
+        coral: '#E15A3C',
+        sand: '#E8DFCF',
       },
       fontFamily: {
         display: ['var(--font-display)', 'Georgia', 'serif'],
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
       },
       maxWidth: {
-        content: '1200px',
+        content: '1240px',
       },
       keyframes: {
         'fade-up': {
-          '0%': { opacity: '0', transform: 'translateY(16px)' },
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
       animation: {
-        'fade-up': 'fade-up 0.7s ease-out both',
+        'fade-up': 'fade-up 0.7s cubic-bezier(0.16,1,0.3,1) both',
       },
     },
   },

@@ -4,7 +4,7 @@
 
 :root {
   --font-display: 'Fraunces', Georgia, serif;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
 }
 
 @layer base {
@@ -12,7 +12,7 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-sand text-night font-sans antialiased;
+    @apply bg-bone text-ink font-sans antialiased;
     text-rendering: optimizeLegibility;
   }
   h1, h2, h3, h4 {
@@ -20,7 +20,16 @@
     text-wrap: balance;
   }
   ::selection {
-    @apply bg-gold/30 text-night;
+    @apply bg-amber/30 text-ink;
+  }
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
@@ -29,36 +38,35 @@
     @apply mx-auto w-full max-w-content px-5 sm:px-8;
   }
 
-  /* Eyebrow / kicker label */
-  .kicker {
-    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-ocean-deep;
+  /* Eyebrow / kicker — amber, uppercase, with a short rule */
+  .eyebrow {
+    @apply inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-amber;
+  }
+  .eyebrow::before {
+    content: '';
+    @apply h-px w-7 bg-amber;
   }
 
-  /* Primary gold button */
-  .btn-gold {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gold px-6 py-3 text-sm font-semibold text-night shadow-sm transition hover:bg-gold-light focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60;
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber/70 focus-visible:ring-offset-bone;
   }
+  .btn-primary { @apply btn bg-coral text-white hover:bg-coral/90; }
+  .btn-vip { @apply btn bg-amber text-ink hover:bg-amber-soft; }
+  .btn-dark { @apply btn bg-mata text-white hover:bg-mata-soft; }
+  .btn-outline { @apply btn border border-ink/20 text-ink hover:border-ink/50 hover:bg-ink/5; }
+  .btn-ghost-light { @apply btn border border-white/30 text-white hover:bg-white/10; }
 
-  /* Ghost button on dark */
-  .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10;
-  }
-
-  .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-night/15 px-5 py-2.5 text-sm font-semibold text-night transition hover:border-night/40 hover:bg-night/5;
-  }
-
-  /* Card — add the `group` class in markup alongside `card` when child hover effects are needed */
   .card {
-    @apply relative overflow-hidden rounded-2xl border border-night/10 bg-white shadow-[0_1px_3px_rgba(7,26,36,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_40px_-12px_rgba(7,26,36,0.25)];
+    @apply relative overflow-hidden rounded-2xl border border-ink/10 bg-cloud transition;
   }
+  .card-hover { @apply hover:-translate-y-1 hover:shadow-[0_18px_50px_-18px_rgba(11,61,46,0.35)]; }
 
-  /* Subtle tropical gradient text */
-  .text-gradient {
-    @apply bg-gradient-to-r from-gold via-coral to-ocean-light bg-clip-text text-transparent;
+  .prose-rio p { @apply text-ink/75 leading-relaxed; }
+
+  .link-underline {
+    @apply underline decoration-amber/50 decoration-2 underline-offset-4 transition hover:decoration-amber;
   }
 }
 
-/* Hide scrollbar for horizontal scrollers */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

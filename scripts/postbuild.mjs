@@ -17,16 +17,16 @@ const html = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rio de Janeiro VIP — The Marvelous City</title>
-<link rel="canonical" href="https://riodejaneiro.vip/en/">
+<link rel="canonical" href="https://riodejaneiro.vip/pt/">
+<link rel="alternate" hreflang="pt-BR" href="https://riodejaneiro.vip/pt/">
 <link rel="alternate" hreflang="en" href="https://riodejaneiro.vip/en/">
-<link rel="alternate" hreflang="pt" href="https://riodejaneiro.vip/pt/">
-<link rel="alternate" hreflang="x-default" href="https://riodejaneiro.vip/en/">
-<meta http-equiv="refresh" content="0; url=${base}/en/">
+<link rel="alternate" hreflang="x-default" href="https://riodejaneiro.vip/pt/">
+<meta http-equiv="refresh" content="0; url=${base}/pt/">
 <script>
   (function () {
     var base = ${JSON.stringify(base)};
-    var lang = (navigator.language || 'en').toLowerCase();
-    location.replace(base + (lang.indexOf('pt') === 0 ? '/pt/' : '/en/'));
+    var lang = (navigator.language || 'pt').toLowerCase();
+    location.replace(base + (lang.indexOf('en') === 0 ? '/en/' : '/pt/'));
   })();
 </script>
 </head>
