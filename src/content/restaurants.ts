@@ -222,6 +222,59 @@ export const RESTAURANTS: Restaurant[] = [
       en: 'A lively Gávea grill known for generous portions of picanha and a buzzing terrace full of locals. No reservations — go early or wait with a beer.',
     },
   },
+  {
+    slug: 'koral',
+    name: 'Koral',
+    neighborhood: 'Rio de Janeiro',
+    cuisine: { pt: 'Brasileira contemporânea', en: 'Contemporary Brazilian' },
+    michelin: 'Bib Gourmand (2026)',
+    price: 'high',
+    hero: '/img/eat.svg',
+    tags: ['bib-gourmand', 'value', 'contemporary'],
+    blurb: {
+      pt: 'O chef Pedro Coronha toca uma cozinha afiada e de bom custo, premiada com o Bib Gourmand pela comida, não pelo cenário. Boa pedida para alta qualidade sem degustação.',
+      en: 'Chef Pedro Coronha runs a sharp, good-value kitchen that earned its Bib Gourmand on the cooking, not the setting. A smart pick for serious food without a tasting commitment.',
+    },
+  },
+  {
+    slug: 'ct-boucherie',
+    name: 'CT Boucherie',
+    neighborhood: 'Leblon',
+    cuisine: { pt: 'Churrasco · bistrô', en: 'Steakhouse · bistro' },
+    price: 'high',
+    hero: '/img/eat.svg',
+    tags: ['steak', 'rodizio', 'claude-troisgros'],
+    blurb: {
+      pt: 'O steakhouse de Claude Troisgros na Rua Dias Ferreira, onde os acompanhamentos vêm em rodízio ao lado do corte escolhido. Uma releitura refinada do rodízio.',
+      en: 'Claude Troisgros’ steakhouse on Rua Dias Ferreira, where the side dishes come rodízio-style alongside your chosen cut. A refined twist on the rodízio.',
+    },
+  },
+  {
+    slug: 'bar-astor',
+    name: 'Bar Astor',
+    neighborhood: 'Ipanema',
+    cuisine: { pt: 'Bar · cozinha de praia', en: 'Bar · beachfront kitchen' },
+    price: 'high',
+    hero: '/img/nightlife.svg',
+    tags: ['bar', 'beachfront', 'cocktails'],
+    blurb: {
+      pt: 'Um bar-restaurante elegante na orla de Ipanema, com varanda de frente para a praia — ótimo para o pôr do sol, drinks e petiscos mais elaborados.',
+      en: 'A stylish bar-restaurant on the Ipanema beachfront, with a veranda facing the sand — great for sunset, cocktails and elevated bar food.',
+    },
+  },
+  {
+    slug: 'sushi-vaz',
+    name: 'Sushi Vaz',
+    neighborhood: 'Rio de Janeiro',
+    cuisine: { pt: 'Japonesa · omakase', en: 'Japanese · omakase' },
+    price: 'luxury',
+    hero: '/img/eat.svg',
+    tags: ['omakase', 'sushi', 'counter'],
+    blurb: {
+      pt: 'Um balcão de omakase intimista, com poucos lugares e ritmo ditado pelo chef. Trate como experiência fixa — confirme os horários de sessão ao reservar.',
+      en: 'An intimate omakase counter with limited seats and a chef-set pace. Approach it as a fixed experience — confirm the seating times when booking.',
+    },
+  },
 ];
 
 const BY_SLUG = new Map(RESTAURANTS.map((r) => [r.slug, r]));

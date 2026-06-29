@@ -63,9 +63,17 @@ export default function EventPage({ params }: { params: { locale: string; evento
       name: event.schema.location,
       address: { '@type': 'PostalAddress', addressLocality: 'Rio de Janeiro', addressCountry: 'BR' },
     },
-    image: `${SITE.url}${event.hero}`,
+    image: event.photo?.url ?? `${SITE.url}${event.hero}`,
     url: absoluteUrl(locale, event.slug),
     organizer: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+    offers: {
+      '@type': 'Offer',
+      url: `${SITE.url}/go/${goSlug}`,
+      priceCurrency: 'BRL',
+      price: isCarnaval ? '250' : '200',
+      availability: 'https://schema.org/InStock',
+      validFrom: '2026-08-01',
+    },
   };
 
   return (
