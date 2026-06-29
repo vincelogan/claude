@@ -14,6 +14,11 @@ export const ATTRACTIONS: Attraction[] = [
     officialUrl: 'https://www.tremdocorcovado.rio/',
     ticketUrl: 'https://www.tremdocorcovado.rio/',
     name: 'Cristo Redentor',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Christ_the_Redeemer_-_Cristo_Redentor.jpg?width=1600',
+      credit: 'Artyominc / Wikimedia Commons',
+      license: 'CC BY-SA 3.0',
+    },
     category: 'icones',
     area: 'Corcovado',
     tagline: { pt: 'A estátua que abraça a cidade', en: 'The statue that embraces the city' },
@@ -212,6 +217,11 @@ export const ATTRACTIONS: Attraction[] = [
     officialUrl: 'https://en.tourmaracana.com.br/',
     ticketUrl: 'https://en.tourmaracana.com.br/ingressos',
     name: 'Maracanã',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Maracana_2022.jpg?width=1600',
+      credit: 'Wikimedia Commons',
+      license: 'CC BY-SA 4.0',
+    },
     category: 'cultura',
     area: 'Maracanã',
     tagline: { pt: 'O templo do futebol brasileiro', en: 'The temple of Brazilian football' },
@@ -328,6 +338,11 @@ export const ATTRACTIONS: Attraction[] = [
     officialUrl: 'https://museudoamanha.org.br/',
     ticketUrl: 'https://museudoamanha.org.br/visite/horarios-e-ingressos',
     name: 'Museu do Amanhã',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/MUSEU_DO_AMANH%C3%83_-_RIO_DE_JANEIRO_(34712681731).jpg?width=1600',
+      credit: 'Halley Pacheco de Oliveira / Wikimedia Commons',
+      license: 'CC BY-SA 2.0',
+    },
     category: 'cultura',
     area: 'Praça Mauá / Centro',
     tagline: { pt: 'O museu do futuro, de Calatrava', en: 'Calatrava’s museum of tomorrow' },
@@ -353,6 +368,11 @@ export const ATTRACTIONS: Attraction[] = [
     officialUrl: 'https://www.aquariomarinhodorio.com.br/',
     ticketUrl: 'https://ingressos.aquariomarinhodorio.com.br/',
     name: 'AquaRio',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/AquaRio_18.jpg?width=1600',
+      credit: 'Wikimedia Commons',
+      license: 'CC BY 2.0',
+    },
     category: 'cultura',
     area: 'Gamboa / Porto',
     tagline: { pt: 'O maior aquário marinho da América do Sul', en: 'South America’s largest marine aquarium' },
@@ -377,6 +397,11 @@ export const ATTRACTIONS: Attraction[] = [
     slug: 'theatro-municipal',
     officialUrl: 'http://theatromunicipal.rj.gov.br/',
     name: 'Theatro Municipal',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Fachada_do_Theatro_Municipal_do_Rio_de_Janeiro.JPG?width=1600',
+      credit: 'Wikimedia Commons',
+      license: 'CC BY-SA 4.0',
+    },
     category: 'cultura',
     area: 'Cinelândia / Centro',
     tagline: { pt: 'A ópera Belle Époque do Rio', en: 'Rio’s Belle Époque opera house' },
@@ -400,6 +425,11 @@ export const ATTRACTIONS: Attraction[] = [
   {
     slug: 'mirante-dona-marta',
     name: 'Mirante Dona Marta',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Bahia_de_Guanabara_visto_do_Mirante_Dona_Marta.jpg?width=1600',
+      credit: 'Wikimedia Commons',
+      license: 'CC BY-SA 3.0',
+    },
     category: 'natureza',
     area: 'Corcovado',
     tagline: { pt: 'A vista de cartão-postal do Rio', en: 'Rio’s postcard viewpoint' },
@@ -423,6 +453,11 @@ export const ATTRACTIONS: Attraction[] = [
   {
     slug: 'pedra-bonita',
     name: 'Pedra Bonita & voo livre',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Rampa_de_voo-livre_da_Pedra_Bonita.jpg?width=1600',
+      credit: 'Wikimedia Commons',
+      license: 'CC BY-SA 3.0',
+    },
     category: 'natureza',
     area: 'São Conrado',
     tagline: { pt: 'Asa-delta sobre a floresta e o mar', en: 'Hang gliding over forest and sea' },
@@ -446,6 +481,11 @@ export const ATTRACTIONS: Attraction[] = [
   {
     slug: 'praia-vermelha-claudio-coutinho',
     name: 'Praia Vermelha & Pista Cláudio Coutinho',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Praia_Vermelha_(Urca),_Rio_de_Janeiro,_RJ,_Brasil.JPG?width=1600',
+      credit: 'Wikimedia Commons',
+      license: 'CC BY-SA 4.0',
+    },
     category: 'natureza',
     area: 'Urca',
     tagline: { pt: 'Enseada calma e trilha à beira-mar', en: 'A calm cove and a coastal trail' },
@@ -469,6 +509,11 @@ export const ATTRACTIONS: Attraction[] = [
   {
     slug: 'joatinga',
     name: 'Praia da Joatinga',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Ponte_da_Joatinga_-_panoramio.jpg?width=1600',
+      credit: 'Wikimedia Commons',
+      license: 'CC BY 3.0',
+    },
     category: 'praias',
     area: 'Joá',
     tagline: { pt: 'Uma cala escondida sob as falésias', en: 'A hidden cove beneath the cliffs' },
@@ -492,6 +537,11 @@ export const ATTRACTIONS: Attraction[] = [
   {
     slug: 'grumari',
     name: 'Praia de Grumari',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Praia_Funda_-_Do_Inferno_e_Grumari.jpg?width=1600',
+      credit: 'Wikimedia Commons',
+      license: 'CC BY-SA 4.0',
+    },
     category: 'praias',
     area: 'Zona Oeste',
     tagline: { pt: 'Areia avermelhada e mata, sem urbanização', en: 'Reddish sand and forest, no development' },
@@ -538,6 +588,11 @@ export const ATTRACTIONS: Attraction[] = [
   {
     slug: 'rio-scenarium',
     name: 'Rio Scenarium',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Arcos_da_Lapa_in_Rio_de_Janeiro.jpg?width=1600',
+      credit: 'Rodrigo Soldon / Wikimedia Commons',
+      license: 'CC BY 2.0',
+    },
     category: 'vida-noturna',
     area: 'Lapa',
     tagline: { pt: 'A casa de samba mais famosa da Lapa', en: 'Lapa’s most famous live-music house' },
@@ -561,6 +616,11 @@ export const ATTRACTIONS: Attraction[] = [
   {
     slug: 'real-gabinete-portugues',
     name: 'Real Gabinete Português de Leitura',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Real_Gabinete_Portugu%C3%AAs_de_Leitura_08.jpg?width=1600',
+      credit: 'Wikimedia Commons',
+      license: 'CC BY-SA 4.0',
+    },
     category: 'cultura',
     area: 'Centro',
     tagline: { pt: 'A biblioteca mais bonita do Rio', en: 'Rio’s most beautiful library' },

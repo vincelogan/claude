@@ -2,9 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { DAYTRIPS } from '@/content';
 import { PageHero } from '@/components/PageHero';
+import { SmartImage } from '@/components/SmartImage';
 import { t, pick, type Localized } from '@/lib/i18n';
 import { SITE, isLocale, type Locale } from '@/lib/site';
 import { buildMetadata } from '@/lib/seo';
+import { assetPath } from '@/lib/asset';
 
 const title: Localized = { pt: 'Bate-voltas saindo do Rio', en: 'Day trips from Rio' };
 const lede: Localized = {
@@ -42,13 +44,27 @@ export default function BateVolta({ params }: { params: { locale: string } }) {
       <div className="container-rio py-16">
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {DAYTRIPS.map((d) => (
-            <div key={d.slug} className="flex flex-col rounded-2xl border border-ink/10 bg-cloud p-6">
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="font-display text-xl font-semibold">{d.name}</h2>
-                <span className="shrink-0 text-xs font-semibold text-amber-deep">{pick(d.time, locale)}</span>
+            <div key={d.slug} className="card flex flex-col overflow-hidden">
+              <div className="relative aspect-[4/3] overflow-hidden">
+                <SmartImage
+                  src={d.photo?.url ?? assetPath(d.hero)}
+                  fallback={assetPath(d.hero)}
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 100vw, 33vw"
+                  className="object-cover"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent p-4">
+                  <h2 className="font-display text-xl font-semibold text-white">{d.name}</h2>
+                </div>
               </div>
-              <p className="mt-1 text-xs font-medium uppercase tracking-wider text-coral">{pick(d.distance, locale)}</p>
-              <p className="mt-3 text-sm leading-relaxed text-ink/70">{pick(d.blurb, locale)}</p>
+              <div className="flex flex-1 flex-col p-5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-xs font-medium uppercase tracking-wider text-coral">{pick(d.distance, locale)}</span>
+                  <span className="shrink-0 text-xs font-semibold text-amber-deep">{pick(d.time, locale)}</span>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-ink/70">{pick(d.blurb, locale)}</p>
+              </div>
             </div>
           ))}
         </div>

@@ -1,4 +1,5 @@
 import type { Localized } from '@/lib/i18n';
+import type { Photo } from './types';
 
 export interface DayTrip {
   slug: string;
@@ -7,12 +8,14 @@ export interface DayTrip {
   time: Localized;
   blurb: Localized;
   hero: string;
+  photo?: Photo;
 }
 
 export const DAYTRIPS: DayTrip[] = [
   {
     slug: 'buzios',
     name: 'Búzios',
+    photo: { url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Praia_Brava_em_Arma%C3%A7%C3%A3o_dos_B%C3%BAzios_Rio_de_Janeiro.jpg?width=1600', credit: 'Wikimedia Commons', license: 'CC BY-SA 4.0' },
     distance: { pt: '~170 km a leste', en: '~170 km east' },
     time: { pt: '~2,5–3h de carro', en: '~2.5–3h by car' },
     blurb: {
@@ -24,6 +27,7 @@ export const DAYTRIPS: DayTrip[] = [
   {
     slug: 'petropolis',
     name: 'Petrópolis',
+    photo: { url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Museu_Imperial,_Petr%C3%B3polis_RJ.jpg?width=1600', credit: 'Wikimedia Commons', license: 'CC BY-SA 4.0' },
     distance: { pt: '~65 km ao norte', en: '~65 km north' },
     time: { pt: '~1,5h de carro', en: '~1.5h by car' },
     blurb: {
@@ -35,6 +39,7 @@ export const DAYTRIPS: DayTrip[] = [
   {
     slug: 'paraty',
     name: 'Paraty',
+    photo: { url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Historic_Centre_of_Paraty.jpg?width=1600', credit: 'Wikimedia Commons', license: 'CC BY-SA 4.0' },
     distance: { pt: '~250 km a oeste', en: '~250 km west' },
     time: { pt: '~4–4,5h de carro', en: '~4–4.5h by car' },
     blurb: {
@@ -46,6 +51,7 @@ export const DAYTRIPS: DayTrip[] = [
   {
     slug: 'ilha-grande',
     name: 'Ilha Grande',
+    photo: { url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Praia_de_Lopes_Mendes_-_Ilha_Grande_-_RJ.jpg?width=1600', credit: 'Wikimedia Commons', license: 'CC BY-SA 4.0' },
     distance: { pt: '~150 km a oeste + barco', en: '~150 km west + boat' },
     time: { pt: '~2,5h + travessia', en: '~2.5h + crossing' },
     blurb: {
@@ -57,6 +63,7 @@ export const DAYTRIPS: DayTrip[] = [
   {
     slug: 'niteroi',
     name: 'Niterói',
+    photo: { url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Museu_de_Arte_Contempor%C3%A2nea_de_Niter%C3%B3i_-_MAC_02.jpg?width=1600', credit: 'Wikimedia Commons', license: 'CC BY-SA 4.0' },
     distance: { pt: '~15 km, cruzando a baía', en: '~15 km across the bay' },
     time: { pt: '~30 min de barca', en: '~30 min by ferry' },
     blurb: {
@@ -68,6 +75,7 @@ export const DAYTRIPS: DayTrip[] = [
   {
     slug: 'arraial-do-cabo',
     name: 'Arraial do Cabo',
+    photo: { url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Praia_do_Farol_em_Arraial_do_Cabo,_RJ.jpg?width=1600', credit: 'Wikimedia Commons', license: 'CC BY-SA 4.0' },
     distance: { pt: '~150 km a leste', en: '~150 km east' },
     time: { pt: '~2,5–3h de carro', en: '~2.5–3h by car' },
     blurb: {
@@ -79,6 +87,7 @@ export const DAYTRIPS: DayTrip[] = [
   {
     slug: 'angra-dos-reis',
     name: 'Angra dos Reis',
+    photo: { url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Ba%C3%ADa_de_Angra_dos_Reis.jpg?width=1600', credit: 'Wikimedia Commons', license: 'CC BY-SA 4.0' },
     distance: { pt: '~150 km a oeste', en: '~150 km west' },
     time: { pt: '~2,5–3h de carro', en: '~2.5–3h by car' },
     blurb: {
@@ -90,6 +99,7 @@ export const DAYTRIPS: DayTrip[] = [
   {
     slug: 'regiao-serrana',
     name: 'Região Serrana (Itaipava & Teresópolis)',
+    photo: { url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Dedo_de_Deus_Serra_dos_%C3%93rg%C3%A3os_06.jpg?width=1600', credit: 'Wikimedia Commons', license: 'CC BY-SA 4.0' },
     distance: { pt: '~90–100 km ao norte', en: '~90–100 km north' },
     time: { pt: '~1,5–2h de carro', en: '~1.5–2h by car' },
     blurb: {

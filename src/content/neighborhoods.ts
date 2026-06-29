@@ -169,6 +169,11 @@ export const NEIGHBORHOODS: Neighborhood[] = [
   {
     slug: 'barra-da-tijuca',
     name: 'Barra da Tijuca',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Vista_Panor%C3%A2mica_da_Barra_da_Tijuca_da_Pedra_Bonita.jpg?width=1600',
+      credit: 'Wikimedia Commons',
+      license: 'CC BY-SA 4.0',
+    },
     zone: { pt: 'Zona Oeste', en: 'West Zone' },
     tagline: { pt: 'Praias enormes, moderno, para famílias', en: 'Huge beaches, modern, family-friendly' },
     bestFor: { pt: 'Famílias, estadias longas', en: 'Families, long stays' },
@@ -263,6 +268,11 @@ export const NEIGHBORHOODS: Neighborhood[] = [
   {
     slug: 'flamengo',
     name: 'Flamengo',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Aterro_do_Flamengo_-_Flamengo_Park,_Rio_de_Janeiro_(8709175602).jpg?width=1600',
+      credit: 'Rodrigo Soldon / Wikimedia Commons',
+      license: 'CC BY-SA 2.0',
+    },
     zone: { pt: 'Zona Sul', en: 'South Zone' },
     tagline: { pt: 'Residencial, verde e bem conectado', en: 'Residential, green and well connected' },
     bestFor: { pt: 'Custo-benefício, parques, clima local', en: 'Value, parks, local life' },
@@ -291,6 +301,11 @@ export const NEIGHBORHOODS: Neighborhood[] = [
   {
     slug: 'gavea',
     name: 'Gávea',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Pedra_da_G%C3%A1vea_by_01.jpg?width=1600',
+      credit: 'Jefferson Vieira de Melo / Wikimedia Commons',
+      license: 'CC BY-SA 4.0',
+    },
     zone: { pt: 'Zona Sul', en: 'South Zone' },
     tagline: { pt: 'Boêmio, jovem e arborizado', en: 'Bohemian, youthful and leafy' },
     bestFor: { pt: 'Noite universitária, verde, cena local', en: 'Student nightlife, greenery, local scene' },
@@ -352,6 +367,11 @@ export const NEIGHBORHOODS: Neighborhood[] = [
   {
     slug: 'lagoa',
     name: 'Lagoa',
+    photo: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Lagoa_Rodrigo_de_Freitas_vista_do_Cristo_Redentor,_Rio_de_Janeiro_-_RJ_-_panoramio.jpg?width=1600',
+      credit: 'Wikimedia Commons',
+      license: 'CC BY 3.0',
+    },
     zone: { pt: 'Zona Sul', en: 'South Zone' },
     tagline: { pt: 'Ativa, cênica e à beira da água', en: 'Active, scenic and waterside' },
     bestFor: { pt: 'Corrida e bike, vistas, quiosques', en: 'Running & cycling, views, kiosks' },
