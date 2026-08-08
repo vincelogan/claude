@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Future Run — endless neon run</title>
+<title>RUN.AI — endless neon run</title>
 <style>
   :root{
     --void:#040812;
@@ -94,6 +94,18 @@
   @keyframes recordpulse{from{transform:scale(1)}to{transform:scale(1.14)}}
   #new-record.hidden{display:none;animation:none}
   .derez{color:var(--orange);font-size:13px;letter-spacing:.55em;text-transform:uppercase;text-shadow:0 0 14px rgba(255,106,31,.9)}
+  .char-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .char-btn{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    background:none;border:1px solid rgba(0,229,255,.25);border-radius:4px;
+    padding:10px 8px 8px;cursor:pointer;min-width:74px;
+  }
+  .char-btn span{
+    font-family:inherit;font-size:9px;letter-spacing:.18em;
+    color:rgba(234,255,255,.8);text-transform:uppercase;
+  }
+  .char-btn.sel{border-color:var(--hot);box-shadow:0 0 14px rgba(234,255,255,.35)}
+  .char-btn:hover,.char-btn:focus-visible{border-color:var(--cyan);outline:none}
   .share-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
   .share-btn{
     background:none;border:1px solid rgba(0,229,255,.5);color:var(--hot);
@@ -121,11 +133,11 @@
 
 <div id="hud">
   <div class="hud-block">
-    <span class="hud-label">Meters</span>
+    <span class="hud-label">Bytes</span>
     <span class="hud-value" id="meters">0</span>
   </div>
   <div class="hud-block right">
-    <span class="hud-label">Coins</span>
+    <span class="hud-label">Tokens</span>
     <span class="hud-value gold" id="coins">0</span>
     <span class="hud-label" id="best" style="margin-top:6px">Best 0</span>
   </div>
@@ -134,8 +146,9 @@
 <button id="mute" aria-label="toggle sound">Sound: On</button>
 
 <div class="overlay" id="start">
-  <canvas class="title-canvas" id="title1" width="700" height="130" aria-label="FUTURE RUN"></canvas>
-  <div class="tagline">Endless neon run · survive the grid</div>
+  <canvas class="title-canvas" id="title1" width="700" height="130" aria-label="RUN.AI"></canvas>
+  <div class="tagline">Choose your AI · outrun the grid</div>
+  <div class="char-row" id="char-row"></div>
   <div class="keys">
     <span><b>&larr;&nbsp;&rarr;</b>switch lane</span>
     <span><b>&uarr;</b>jump</span>
@@ -152,7 +165,7 @@
 </div>
 
 <div class="overlay hidden" id="over">
-  <div class="derez">— Derezzed —</div>
+  <div class="derez">— Connection Lost —</div>
   <div id="final-score">0</div>
   <div id="final-detail"></div>
   <div id="new-record" class="hidden">&#9733;&nbsp;NEW&nbsp;RECORD&nbsp;&#9733;</div>
@@ -437,6 +450,103 @@ const AudioSys = (() => {
   };
 })();
 
+
+/* ---------- playable AIs ---------- */
+const CHARS = [
+  { id:"chatgpt",  name:"ChatGPT",    color:"#9fd6c9" },
+  { id:"claude",   name:"Claude",     color:"#ff7a45" },
+  { id:"manus",    name:"Manus",      color:"#e0a458" },
+  { id:"pplx",     name:"Perplexity", color:"#20b8cd" },
+  { id:"gemini",   name:"Gemini",     color:"#8ab4f8" }
+];
+let charIdx = 1;
+try { charIdx = Math.min(4, Math.max(0, parseInt(localStorage.getItem("runai-char") || "1", 10) || 1)); } catch(e){}
+
+/* stylized icon glyphs, drawable at any size */
+function drawIcon(g, id, x, y, r, color){
+  g.save();
+  g.translate(x, y);
+  g.strokeStyle = color; g.fillStyle = color;
+  g.lineCap = "round"; g.lineJoin = "round";
+  if (id === "chatgpt"){
+    g.lineWidth = Math.max(1, r * 0.18);
+    for (let i = 0; i < 6; i++){
+      g.save(); g.rotate(i * Math.PI / 3);
+      g.beginPath();
+      g.ellipse(0, -r * 0.48, r * 0.30, r * 0.52, 0, 0, Math.PI * 2);
+      g.stroke();
+      g.restore();
+    }
+  } else if (id === "claude"){
+    g.lineWidth = Math.max(1.2, r * 0.20);
+    for (let i = 0; i < 12; i++){
+      const a = i * Math.PI / 6 + 0.13;
+      const len = r * (i % 2 ? 0.72 : 1.0);
+      g.beginPath();
+      g.moveTo(Math.cos(a) * r * 0.22, Math.sin(a) * r * 0.22);
+      g.lineTo(Math.cos(a) * len, Math.sin(a) * len);
+      g.stroke();
+    }
+  } else if (id === "manus"){
+    const f = r * 0.26;
+    for (let i = 0; i < 4; i++){
+      const fx = -r * 0.62 + i * r * 0.42;
+      const fh = r * (i === 1 || i === 2 ? 1.5 : 1.25);
+      g.beginPath();
+      g.roundRect(fx, -r * 0.55 - (fh - r), f, fh, f / 2);
+      g.fill();
+    }
+    g.beginPath();
+    g.roundRect(-r * 0.72, -r * 0.15, r * 1.62, r * 1.0, r * 0.3);
+    g.fill();
+    g.save(); g.rotate(0.7);
+    g.beginPath(); g.roundRect(r * 0.35, -r * 0.30, r * 0.75, f, f / 2); g.fill();
+    g.restore();
+  } else if (id === "pplx"){
+    g.lineWidth = Math.max(1.2, r * 0.18);
+    g.beginPath();
+    g.moveTo(-r * 0.62, -r * 0.9); g.lineTo(-r * 0.62, -r * 0.32);
+    g.lineTo(r * 0.62, r * 0.32);  g.lineTo(r * 0.62, r * 0.9);
+    g.stroke();
+    g.beginPath();
+    g.moveTo(r * 0.62, -r * 0.9);  g.lineTo(r * 0.62, -r * 0.32);
+    g.lineTo(-r * 0.62, r * 0.32); g.lineTo(-r * 0.62, r * 0.9);
+    g.stroke();
+  } else if (id === "gemini"){
+    g.beginPath();
+    g.moveTo(0, -r);
+    g.quadraticCurveTo(r * 0.14, -r * 0.14, r, 0);
+    g.quadraticCurveTo(r * 0.14, r * 0.14, 0, r);
+    g.quadraticCurveTo(-r * 0.14, r * 0.14, -r, 0);
+    g.quadraticCurveTo(-r * 0.14, -r * 0.14, 0, -r);
+    g.fill();
+  }
+  g.restore();
+}
+
+/* build the select row */
+(function(){
+  const row = document.getElementById("char-row");
+  CHARS.forEach((ch, i) => {
+    const b = document.createElement("button");
+    b.className = "char-btn" + (i === charIdx ? " sel" : "");
+    const cv = document.createElement("canvas");
+    cv.width = 56; cv.height = 56;
+    const g = cv.getContext("2d");
+    g.shadowColor = ch.color; g.shadowBlur = 10;
+    drawIcon(g, ch.id, 28, 28, 19, ch.color);
+    const nm = document.createElement("span");
+    nm.textContent = ch.name;
+    b.appendChild(cv); b.appendChild(nm);
+    b.addEventListener("click", () => {
+      charIdx = i;
+      try { localStorage.setItem("runai-char", String(i)); } catch(e){}
+      row.querySelectorAll(".char-btn").forEach((x, k) => x.classList.toggle("sel", k === i));
+    });
+    row.appendChild(b);
+  });
+})();
+
 /* ---------- game state ---------- */
 const S = {
   mode: "start",            // start | play | dead
@@ -454,11 +564,12 @@ const S = {
   spawnZ: 2600,             // world z of next pattern
   obstacles: [], coins$: [], parts: [], floaters: [], stars: [], towers: []
 };
-try { S.best = parseInt(localStorage.getItem("futurerun-best") || "0", 10) || 0; } catch(e){}
+try { S.best = parseInt(localStorage.getItem("runai-best") || "0", 10) || 0; } catch(e){}
 
 const $ = id => document.getElementById(id);
 const metersEl = $("meters"), coinsEl = $("coins"), bestEl = $("best"), comboEl = $("combo");
-bestEl.textContent = "Best " + S.best + " m";
+function fmtBytes(n){ return n >= 1000 ? (n / 1000).toFixed(1) + " kb" : n + " b"; }
+bestEl.textContent = "Best " + fmtBytes(S.best);
 
 /* stars + skyline generated once */
 for (let i = 0; i < 90; i++)
@@ -603,7 +714,7 @@ function startGame(){
   Object.assign(S, {
     mode:"play", speed:1350, dist:0, coins:0, combo:0, comboTime:0, recordSplashed:false,
     lane:0, laneX:0, y:0, vy:0, onGround:true, sliding:0,
-    shake:0, flash:0, pulse:0, milestone:0, suit:SUITS[0], spawnZ:3200,
+    shake:0, flash:0, pulse:0, milestone:0, suit:CHARS[charIdx].color, spawnZ:3200,
     nitro:0, curve:0, heading:0, turn:null,
     nextTurnAt:28000 + Math.random() * 17000, nextSpeedAt:30000,
     obstacles:[], coins$:[], parts:[], floaters:[]
@@ -633,13 +744,14 @@ function die(){
   const isRecord = meters > S.best;
   if (isRecord){
     S.best = meters;
-    try { localStorage.setItem("futurerun-best", String(meters)); } catch(e){}
-    bestEl.textContent = "Best " + S.best + " m";
+    try { localStorage.setItem("runai-best", String(meters)); } catch(e){}
+    bestEl.textContent = "Best " + fmtBytes(S.best);
   }
   setTimeout(() => {
-    $("final-score").textContent = meters.toLocaleString("en-US") + " m";
+    $("final-score").textContent = fmtBytes(meters);
     $("final-detail").innerHTML =
-      "coins " + S.coins + " &nbsp;·&nbsp; best " + S.best.toLocaleString("en-US") + " m";
+      "tokens " + S.coins + " &nbsp;·&nbsp; best " + fmtBytes(S.best) +
+      " &nbsp;·&nbsp; " + CHARS[charIdx].name.toUpperCase();
     $("new-record").classList.toggle("hidden", !isRecord);
     $("over").classList.remove("hidden");
   }, 1300);
@@ -682,7 +794,7 @@ function update(dt){
         S.nextTurnAt = S.dist + 25000 + Math.random() * 20000;
       }
     }
-    metersEl.textContent = Math.floor(S.dist / 100).toLocaleString("en-US");
+    metersEl.textContent = fmtBytes(Math.floor(S.dist / 100));
     // live record splash the moment you pass your old best
     if (!S.recordSplashed && S.best > 0 && S.dist / 100 > S.best){
       S.recordSplashed = true;
@@ -790,7 +902,7 @@ function update(dt){
         const ms = Math.floor(S.coins / 10);
         if (ms > S.milestone){
           S.milestone = ms;
-          S.suit = SUITS[ms % SUITS.length];
+          S.suit = ms % SUITS.length === 0 ? CHARS[charIdx].color : SUITS[ms % SUITS.length];
           S.pulse = 1;
           AudioSys.fanfare();
           S.floaters.push({ x: S.laneX * LANE_W, y: 330, z: PLAYER_Z + 250,
@@ -802,7 +914,7 @@ function update(dt){
             S.nitro = 5000;   // 50 m of nitro sprint
             AudioSys.nitro();
             S.floaters.push({ x: 0, y: 480, z: PLAYER_Z + 400,
-                              txt: "NITRO! 50m", life: 1.6, big: true, color: "#ffffff" });
+                              txt: "NITRO! 50b", life: 1.6, big: true, color: "#ffffff" });
           }
         }
       }
@@ -1179,7 +1291,7 @@ function drawMarkers(){
     ctx.fillStyle = COLORS.hot;
     ctx.font = "bold " + Math.max(6, 105 * base.s) + "px 'Lucida Console',monospace";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText((P / 100) + "m", bc.x, bc.y + 1);
+    ctx.fillText((P / 100) + "b", bc.x, bc.y + 1);
     ctx.restore();
   }
 }
@@ -1312,9 +1424,8 @@ function drawPlayer(){
     line([[-0.18, 0.26], [0.18, 0.26]]);                   // hunched shoulder bar
     line([[0, 0.14], [0, 0.26]]);                          // short spine
     const [hx, hy] = s2(0, 0.36);
-    ctx.fillStyle = COLORS.hot;
     ctx.shadowBlur = 16;
-    ctx.beginPath(); ctx.arc(hx, hy, u * 0.075, 0, Math.PI * 2); ctx.fill();
+    drawIcon(ctx, CHARS[charIdx].id, hx, hy, u * 0.10, COLORS.hot);
   } else {
     /* back view: legs pump alternately, heels kick up toward the camera;
        hips and shoulders counter-rotate like a real gait */
@@ -1359,16 +1470,10 @@ function drawPlayer(){
     line([[hipSway - hipW, hipY], [hipSway + hipW, hipY]]);
     line([[hipSway, hipY], [hipSway * 0.2, (hipY + shY) / 2 + 0.015], [-hipSway * 0.6, shY]]);
     line([[-hipSway * 0.6 - shW, shY - roll], [-hipSway * 0.6 + shW, shY + roll]]);
-    // head
-    const [hx, hy] = s2(-hipSway * 0.6, shY + 0.13);
-    ctx.fillStyle = COLORS.hot;
+    // head: the chosen AI's icon
+    const [hx, hy] = s2(-hipSway * 0.6, shY + 0.155);
     ctx.shadowBlur = 16;
-    ctx.beginPath(); ctx.arc(hx, hy, u * 0.072, 0, Math.PI * 2); ctx.fill();
-    // helmet visor stripe
-    ctx.strokeStyle = S.suit;
-    ctx.lineWidth = Math.max(1.5, 4 * scale);
-    ctx.shadowBlur = 8;
-    ctx.beginPath(); ctx.arc(hx, hy, u * 0.072, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+    drawIcon(ctx, CHARS[charIdx].id, hx, hy, u * 0.105, COLORS.hot);
   }
   ctx.restore();
 }
@@ -1377,8 +1482,9 @@ function drawPlayer(){
 /* ---------- share: card image + social buttons ---------- */
 const GAME_URL = "https://claude.ai/code/artifact/0c60082d-549b-4c76-83de-fb53ae75406b";
 function shareText(){
-  return "\u26a1 FUTURE RUN: corri " + Math.floor(S.dist / 100) +
-         " m e peguei " + S.coins + " coins! Consegue me bater? Jogue: " + GAME_URL;
+  return "\ud83e\udd16 RUN.AI: corri " + fmtBytes(Math.floor(S.dist / 100)) +
+         " com " + CHARS[charIdx].name + " e coletei " + S.coins +
+         " tokens! Consegue me bater? Jogue: " + GAME_URL;
 }
 function buildCard(){
   const c = document.createElement("canvas");
@@ -1398,16 +1504,16 @@ function buildCard(){
   g.font = "bold 92px 'Arial Narrow','Helvetica Neue',Arial,sans-serif";
   g.shadowColor = "#00e5ff"; g.shadowBlur = 34;
   g.strokeStyle = "rgba(0,229,255,0.95)"; g.lineWidth = 3;
-  g.strokeText("F U T U R E   R U N", 540, 170);
+  g.strokeText("R U N . A I", 540, 170);
   g.shadowBlur = 0; g.fillStyle = "#eaffff";
-  g.fillText("F U T U R E   R U N", 540, 170);
+  g.fillText("R U N . A I", 540, 170);
   g.font = "bold 230px 'Lucida Console',monospace";
   g.fillStyle = "#ffd447"; g.shadowColor = "#ffd447"; g.shadowBlur = 44;
-  g.fillText(Math.floor(S.dist / 100) + "m", 540, 760);
+  g.fillText(fmtBytes(Math.floor(S.dist / 100)).replace(" ", ""), 540, 760);
   g.shadowBlur = 0;
   g.font = "44px 'Lucida Console',monospace";
   g.fillStyle = "#eaffff";
-  g.fillText(S.coins + " COINS", 540, 850);
+  g.fillText(S.coins + " TOKENS \u00b7 " + CHARS[charIdx].name.toUpperCase(), 540, 850);
   if (Math.floor(S.dist / 100) >= S.best && S.best > 0){
     g.fillStyle = "#ffd447";
     g.font = "bold 52px 'Lucida Console',monospace";
@@ -1431,14 +1537,14 @@ async function saveCard(){
   const blob = await cardBlob();
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "future-run-" + Math.floor(S.dist / 100) + "m.jpg";
+  a.download = "run-ai-" + Math.floor(S.dist / 100) + "b.jpg";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 async function shareNative(){
   try {
     const blob = await cardBlob();
-    const file = new File([blob], "future-run.jpg", { type: "image/jpeg" });
+    const file = new File([blob], "run-ai.jpg", { type: "image/jpeg" });
     if (navigator.canShare && navigator.canShare({ files: [file] })){
       await navigator.share({ files: [file], text: shareText() });
       return true;
@@ -1471,13 +1577,13 @@ $("sh-save").addEventListener("click", async () => { await saveCard(); note("jpg
 (function drawTitle(){
   const tc = document.getElementById("title1");
   const t = tc.getContext("2d");
-  const word = "FUTURE RUN";
+  const word = "RUN.AI";
   t.clearRect(0, 0, tc.width, tc.height);
-  t.font = "700 74px 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif";
+  t.font = "700 92px 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif";
   t.textAlign = "center"; t.textBaseline = "middle";
   const cx = tc.width / 2, cy = tc.height / 2;
   // spread letters manually for tracking
-  const track = 62;
+  const track = 92;
   const startX = cx - (word.length - 1) * track / 2;
   t.lineJoin = "round";
   for (let pass = 0; pass < 2; pass++){
@@ -1492,7 +1598,7 @@ $("sh-save").addEventListener("click", async () => { await saveCard(); note("jpg
       } else {
         t.shadowBlur = 0;
         t.fillStyle = "#eaffff";
-        t.font = "700 74px 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif";
+        t.font = "700 92px 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif";
         t.globalAlpha = 0.92;
         t.fillText(word[i], x, cy);
         t.globalAlpha = 1;
