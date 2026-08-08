@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>GRIDRUNNER — endless neon run</title>
+<title>Future Run — endless neon run</title>
 <style>
   :root{
     --void:#040812;
@@ -86,8 +86,13 @@
   .big-btn:hover,.big-btn:focus-visible{box-shadow:0 0 30px rgba(0,229,255,.7),0 0 40px rgba(0,229,255,.25) inset;outline:none}
   #final-score{font-size:44px;letter-spacing:.1em;color:var(--hot);text-shadow:0 0 18px rgba(0,229,255,.9);font-variant-numeric:tabular-nums}
   #final-detail{font-size:12px;letter-spacing:.3em;color:rgba(234,255,255,.7);text-transform:uppercase;line-height:2}
-  #new-record{font-size:13px;letter-spacing:.4em;color:var(--gold);text-transform:uppercase;text-shadow:0 0 14px rgba(255,212,71,.9)}
-  #new-record.hidden{display:none}
+  #new-record{
+    font-size:30px;letter-spacing:.3em;color:var(--gold);text-transform:uppercase;
+    text-shadow:0 0 18px rgba(255,212,71,1),0 0 44px rgba(255,212,71,.7);
+    animation:recordpulse .5s ease-in-out infinite alternate;
+  }
+  @keyframes recordpulse{from{transform:scale(1)}to{transform:scale(1.14)}}
+  #new-record.hidden{display:none;animation:none}
   .derez{color:var(--orange);font-size:13px;letter-spacing:.55em;text-transform:uppercase;text-shadow:0 0 14px rgba(255,106,31,.9)}
   @keyframes coinpop{0%{transform:scale(1.55)}100%{transform:scale(1)}}
   .hud-value.pop{animation:coinpop .28s ease-out}
@@ -108,8 +113,8 @@
 
 <div id="hud">
   <div class="hud-block">
-    <span class="hud-label">Score</span>
-    <span class="hud-value" id="score">0</span>
+    <span class="hud-label">Meters</span>
+    <span class="hud-value" id="meters">0</span>
   </div>
   <div class="hud-block right">
     <span class="hud-label">Coins</span>
@@ -121,7 +126,7 @@
 <button id="mute" aria-label="toggle sound">Sound: On</button>
 
 <div class="overlay" id="start">
-  <canvas class="title-canvas" id="title1" width="700" height="130" aria-label="GRIDRUNNER"></canvas>
+  <canvas class="title-canvas" id="title1" width="700" height="130" aria-label="FUTURE RUN"></canvas>
   <div class="tagline">Endless neon run · survive the grid</div>
   <div class="keys">
     <span><b>&larr;&nbsp;&rarr;</b>switch lane</span>
@@ -142,7 +147,7 @@
   <div class="derez">— Derezzed —</div>
   <div id="final-score">0</div>
   <div id="final-detail"></div>
-  <div id="new-record" class="hidden">&#9733; New record &#9733;</div>
+  <div id="new-record" class="hidden">&#9733;&nbsp;NEW&nbsp;RECORD&nbsp;&#9733;</div>
   <button class="big-btn" id="btn-again">Run&nbsp;Again</button>
 </div>
 
@@ -285,17 +290,40 @@ const AudioSys = (() => {
       tone(1200, "sine", t, 0.004, 0.05, 0.07);
     },
     sad(){
-      /* instant game-over jingle: bratty little trill, then a drooping
-         chromatic descent into a low womp — Mario taught us it must sting */
+      /* game-over music: loud sad-trombone womps with vibrato, each a step
+         down, ending in a long miserable slide — maximum chateacao */
       if (!ac || muted) return;
       const t = ac.currentTime;
-      const seq = [[76,0,.10],[71,.10,.10],[67,.20,.16],
-                   [68,.44,.17],[67,.64,.17],[66,.84,.17],[64,1.04,.5]];
-      for (const [n, at, d] of seq){
-        tone(midiHz(n), "square", t + at, 0.008, d, 0.16);
-        tone(midiHz(n - 12), "triangle", t + at, 0.008, d, 0.11);
-      }
-      tone(41.2, "sawtooth", t + 1.04, 0.02, 0.6, 0.18);
+      const womp = (f0, f1, at, d, peak) => {
+        for (const [mult, type, k] of [[1, "sawtooth", 1], [0.5, "triangle", 0.8], [2, "square", 0.25]]){
+          const o = ac.createOscillator(), g = ac.createGain();
+          o.type = type;
+          o.frequency.setValueAtTime(f0 * mult, t + at);
+          o.frequency.exponentialRampToValueAtTime(f1 * mult, t + at + d);
+          const lfo = ac.createOscillator(), lg = ac.createGain();
+          lfo.type = "sine"; lfo.frequency.value = 6.5;
+          lg.gain.value = f0 * mult * 0.025;
+          lfo.connect(lg); lg.connect(o.frequency);
+          env(g, t + at, 0.02, d, peak * k);
+          o.connect(g); g.connect(master);
+          o.start(t + at); o.stop(t + at + d + 0.1);
+          lfo.start(t + at); lfo.stop(t + at + d + 0.1);
+        }
+      };
+      womp(277, 262, 0.00, 0.30, 0.50);   // wah
+      womp(262, 247, 0.36, 0.30, 0.52);   // wah
+      womp(247, 233, 0.72, 0.30, 0.54);   // wah
+      womp(233, 147, 1.08, 1.10, 0.60);   // waaaaah... (long fall)
+      tone(41.2, "sine", t + 2.0, 0.02, 0.8, 0.45);  // final low thud
+    },
+    record(){
+      /* live new-record splash: sparkling ascending glissando */
+      if (!ac || muted) return;
+      const t = ac.currentTime;
+      for (let i = 0; i < 10; i++)
+        tone(660 * Math.pow(1.122, i), "triangle", t + i * 0.05, 0.005, 0.16, 0.13);
+      tone(1318.5, "sine", t + 0.55, 0.01, 0.55, 0.16);
+      tone(1976, "sine", t + 0.62, 0.01, 0.45, 0.09);
     },
     fanfare(){
       /* every-10-coins reward: 1-up style ascending arpeggio */
@@ -366,7 +394,7 @@ const AudioSys = (() => {
 /* ---------- game state ---------- */
 const S = {
   mode: "start",            // start | play | dead
-  speed: 0, dist: 0, score: 0, coins: 0,
+  speed: 0, dist: 0, coins: 0, recordSplashed: false,
   combo: 0, comboTime: 0,
   lane: 0, laneX: 0,        // rendered x (eases toward lane)
   y: 0, vy: 0, onGround: true,
@@ -378,11 +406,11 @@ const S = {
   spawnZ: 2600,             // world z of next pattern
   obstacles: [], coins$: [], parts: [], floaters: [], stars: [], towers: []
 };
-try { S.best = parseInt(localStorage.getItem("gridrunner-best") || "0", 10) || 0; } catch(e){}
+try { S.best = parseInt(localStorage.getItem("futurerun-best") || "0", 10) || 0; } catch(e){}
 
 const $ = id => document.getElementById(id);
-const scoreEl = $("score"), coinsEl = $("coins"), bestEl = $("best"), comboEl = $("combo");
-bestEl.textContent = "Best " + S.best;
+const metersEl = $("meters"), coinsEl = $("coins"), bestEl = $("best"), comboEl = $("combo");
+bestEl.textContent = "Best " + S.best + " m";
 
 /* stars + skyline generated once */
 for (let i = 0; i < 90; i++)
@@ -524,7 +552,7 @@ $("mute").addEventListener("click", () => {
 function startGame(){
   AudioSys.unlock(); AudioSys.startMusic();
   Object.assign(S, {
-    mode:"play", speed:1350, dist:0, score:0, coins:0, combo:0, comboTime:0,
+    mode:"play", speed:1350, dist:0, coins:0, combo:0, comboTime:0, recordSplashed:false,
     lane:0, laneX:0, y:0, vy:0, onGround:true, sliding:0,
     shake:0, flash:0, pulse:0, milestone:0, suit:SUITS[0], spawnZ:3200,
     obstacles:[], coins$:[], parts:[], floaters:[]
@@ -533,7 +561,7 @@ function startGame(){
   makeTowers();
   $("start").classList.add("hidden");
   $("over").classList.add("hidden");
-  scoreEl.textContent = "0"; coinsEl.textContent = "0";
+  metersEl.textContent = "0"; coinsEl.textContent = "0";
 }
 function die(){
   S.mode = "dead";
@@ -550,20 +578,20 @@ function die(){
       c: Math.random() < 0.75 ? "cyan" : "hot", sz: 7 + Math.random() * 12
     });
   }
-  const final = Math.floor(S.score);
-  const isRecord = final > S.best;
+  const meters = Math.floor(S.dist / 100);
+  const isRecord = meters > S.best;
   if (isRecord){
-    S.best = final;
-    try { localStorage.setItem("gridrunner-best", String(final)); } catch(e){}
-    bestEl.textContent = "Best " + S.best;
+    S.best = meters;
+    try { localStorage.setItem("futurerun-best", String(meters)); } catch(e){}
+    bestEl.textContent = "Best " + S.best + " m";
   }
   setTimeout(() => {
-    $("final-score").textContent = final.toLocaleString("en-US");
+    $("final-score").textContent = meters.toLocaleString("en-US") + " m";
     $("final-detail").innerHTML =
-      "distance " + Math.floor(S.dist / 100).toLocaleString("en-US") + " m &nbsp;·&nbsp; coins " + S.coins;
+      "coins " + S.coins + " &nbsp;·&nbsp; best " + S.best.toLocaleString("en-US") + " m";
     $("new-record").classList.toggle("hidden", !isRecord);
     $("over").classList.remove("hidden");
-  }, 900);
+  }, 1300);
 }
 
 /* ---------- update ---------- */
@@ -573,8 +601,15 @@ function update(dt){
     S.speed = Math.min(3400, S.speed + dt * 26);
     const dz = S.speed * dt;
     S.dist += dz;
-    S.score += dz * 0.01 * (1 + S.combo * 0.1);
-    scoreEl.textContent = Math.floor(S.score).toLocaleString("en-US");
+    metersEl.textContent = Math.floor(S.dist / 100).toLocaleString("en-US");
+    // live record splash the moment you pass your old best
+    if (!S.recordSplashed && S.best > 0 && S.dist / 100 > S.best){
+      S.recordSplashed = true;
+      S.pulse = 1;
+      AudioSys.record();
+      S.floaters.push({ x: 0, y: 420, z: PLAYER_Z + 600,
+                        txt: "NEW RECORD!", life: 2.0, big: true, color: COLORS.gold });
+    }
 
     // lane easing
     S.laneX += (S.lane - S.laneX) * Math.min(1, dt * 14);
@@ -634,7 +669,6 @@ function update(dt){
           Math.abs((S.y + 130) - c.y) < 170){
         c.got = true;
         S.coins++; S.combo++; S.comboTime = 2.2;
-        S.score += 10 * (1 + S.combo * 0.1);
         coinsEl.textContent = S.coins;
         coinsEl.classList.remove("pop"); void coinsEl.offsetWidth;
         coinsEl.classList.add("pop");
@@ -702,6 +736,7 @@ function draw(){
   drawSky();
   drawTowers();
   drawGrid();
+  drawMarkers();
 
   // depth sort far → near, then draw
   const ents = [];
@@ -967,6 +1002,45 @@ function wireBox(x0, x1, y0, y1, z, depth, color, baseAlpha){
   ctx.restore();
 }
 
+/* track-and-field distance boards every 50 m along the right edge */
+function drawMarkers(){
+  const step = 5000;                                  // 50 m in world units
+  const x = 2.05 * LANE_W;
+  let P = Math.max(step, Math.ceil((S.dist + NEAR - PLAYER_Z) / step) * step);
+  for (; ; P += step){
+    const z = P - S.dist + PLAYER_Z;
+    if (z > DRAW_Z * 0.85) break;
+    if (z < NEAR + 1) continue;
+    const base = project(x, 0, z);
+    const top  = project(x, 340, z);
+    let a = Math.max(0, Math.min(1, 1.4 - z / (DRAW_Z * 0.5)));
+    a *= Math.max(0, Math.min(1, (z - 260) / (PLAYER_Z - 140 - 260)));
+    if (a <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = a;
+    // post
+    ctx.strokeStyle = COLORS.hot;
+    ctx.lineWidth = Math.max(1, 16 * base.s);
+    ctx.beginPath();
+    ctx.moveTo(base.x, base.y); ctx.lineTo(top.x, top.y);
+    ctx.stroke();
+    // board
+    const bw = 330 * base.s, bh = 150 * base.s;
+    const bc = project(x, 430, z);
+    ctx.fillStyle = "rgba(3,10,20,0.9)";
+    ctx.strokeStyle = COLORS.gold;
+    ctx.lineWidth = Math.max(1, 14 * base.s);
+    ctx.beginPath();
+    ctx.rect(bc.x - bw / 2, bc.y - bh / 2, bw, bh);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = COLORS.hot;
+    ctx.font = "bold " + Math.max(6, 105 * base.s) + "px 'Lucida Console',monospace";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText((P / 100) + "m", bc.x, bc.y + 1);
+    ctx.restore();
+  }
+}
+
 function drawObstacle(o){
   const zc = Math.max(o.z, NEAR + 1);
   // fade out as the obstacle passes the player so it never smears the screen
@@ -1098,28 +1172,30 @@ function drawPlayer(){
     ctx.shadowBlur = 16;
     ctx.beginPath(); ctx.arc(hx, hy, u * 0.075, 0, Math.PI * 2); ctx.fill();
   } else {
-    /* back view: legs pump alternately, heels kick up toward the camera */
-    const roll = air ? 0 : Math.sin(ph) * 0.022;           // shoulder sway
-    const bob  = air ? 0 : Math.abs(Math.cos(ph)) * 0.025; // stride bounce
+    /* back view: legs pump alternately, heels kick up toward the camera;
+       hips and shoulders counter-rotate like a real gait */
+    const roll = air ? 0 : Math.sin(ph) * 0.024;            // shoulder sway
+    const hipSway = air ? 0 : Math.sin(ph) * 0.03;          // weight over planted foot
+    const bob  = air ? 0 : Math.abs(Math.cos(ph)) * 0.028;  // stride bounce
     const hipY = 0.50 - bob, shY = 0.84 - bob;
     const hipW = 0.085, shW = 0.16;
 
     const leg = (side, phase) => {
       const l = air ? (S.vy > 0 ? 0.8 : 0.25) : Math.max(0, Math.sin(phase));
-      const hx = side * hipW;
-      const kneeX = side * (hipW + 0.02 + 0.09 * l);
-      const kneeY = 0.27 + 0.05 * l;
-      const footX = side * (hipW + 0.05 * l);
-      const footY = air ? 0.10 + 0.18 * l : 0.02 + 0.30 * l;
+      const hx = hipSway + side * hipW;
+      const kneeX = hipSway + side * (hipW + 0.015 + 0.10 * l);
+      const kneeY = 0.27 + 0.08 * l;
+      const footX = hipSway * 0.4 + side * (hipW - 0.015 + 0.06 * l);
+      const footY = air ? 0.10 + 0.18 * l : 0.02 + 0.34 * l;
       line([[hx, hipY], [kneeX, kneeY], [footX, footY]]);
     };
     const arm = (side, phase) => {
       const sw = air ? 0.9 : Math.sin(phase);
-      const sx = side * shW;
-      const elbX = side * (shW + 0.065);
-      const elbY = shY - 0.17 + 0.02 * sw;
-      const hndX = side * (shW - 0.02 - 0.07 * Math.max(0, sw));
-      const hndY = air ? 0.72 : 0.54 + 0.12 * sw;
+      const sx = -hipSway * 0.6 + side * shW;
+      const elbX = -hipSway * 0.6 + side * (shW + 0.055 + 0.03 * Math.max(0, -sw));
+      const elbY = shY - 0.17 + 0.03 * sw;
+      const hndX = -hipSway * 0.6 + side * (shW - 0.03 - 0.08 * Math.max(0, sw));
+      const hndY = air ? 0.72 : 0.50 + 0.16 * sw;
       line([[sx, shY + (side > 0 ? roll : -roll)], [elbX, elbY], [hndX, hndY]]);
     };
     // far-swing limbs dimmer for depth
@@ -1127,12 +1203,12 @@ function drawPlayer(){
     leg(-1, ph + Math.PI); arm(1, ph + Math.PI);
     ctx.globalAlpha = 1;
     leg(1, ph); arm(-1, ph);
-    // hips, spine, shoulder bar (with sway)
-    line([[-hipW, hipY], [hipW, hipY]]);
-    line([[0, hipY], [0, shY]]);
-    line([[-shW, shY - roll], [shW, shY + roll]]);
+    // hips, spine, shoulder bar (counter-rotating)
+    line([[hipSway - hipW, hipY], [hipSway + hipW, hipY]]);
+    line([[hipSway, hipY], [-hipSway * 0.6, shY]]);
+    line([[-hipSway * 0.6 - shW, shY - roll], [-hipSway * 0.6 + shW, shY + roll]]);
     // head
-    const [hx, hy] = s2(0, shY + 0.13);
+    const [hx, hy] = s2(-hipSway * 0.6, shY + 0.13);
     ctx.fillStyle = COLORS.hot;
     ctx.shadowBlur = 16;
     ctx.beginPath(); ctx.arc(hx, hy, u * 0.072, 0, Math.PI * 2); ctx.fill();
@@ -1149,7 +1225,7 @@ function drawPlayer(){
 (function drawTitle(){
   const tc = document.getElementById("title1");
   const t = tc.getContext("2d");
-  const word = "GRIDRUNNER";
+  const word = "FUTURE RUN";
   t.clearRect(0, 0, tc.width, tc.height);
   t.font = "700 74px 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif";
   t.textAlign = "center"; t.textBaseline = "middle";
