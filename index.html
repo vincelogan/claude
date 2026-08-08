@@ -94,6 +94,14 @@
   @keyframes recordpulse{from{transform:scale(1)}to{transform:scale(1.14)}}
   #new-record.hidden{display:none;animation:none}
   .derez{color:var(--orange);font-size:13px;letter-spacing:.55em;text-transform:uppercase;text-shadow:0 0 14px rgba(255,106,31,.9)}
+  .share-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .share-btn{
+    background:none;border:1px solid rgba(0,229,255,.5);color:var(--hot);
+    font-family:inherit;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    padding:10px 16px;cursor:pointer;border-radius:2px;
+  }
+  .share-btn:hover,.share-btn:focus-visible{border-color:var(--cyan);box-shadow:0 0 10px rgba(0,229,255,.5);outline:none}
+  #share-note{font-size:10px;letter-spacing:.2em;color:rgba(234,255,255,.65);text-transform:uppercase;min-height:14px}
   @keyframes coinpop{0%{transform:scale(1.55)}100%{transform:scale(1)}}
   .hud-value.pop{animation:coinpop .28s ease-out}
   @media (max-width:600px){
@@ -149,6 +157,13 @@
   <div id="final-detail"></div>
   <div id="new-record" class="hidden">&#9733;&nbsp;NEW&nbsp;RECORD&nbsp;&#9733;</div>
   <button class="big-btn" id="btn-again">Run&nbsp;Again</button>
+  <div class="share-row">
+    <button class="share-btn" id="sh-insta">Instagram</button>
+    <button class="share-btn" id="sh-wa">WhatsApp</button>
+    <button class="share-btn" id="sh-fb">Facebook</button>
+    <button class="share-btn" id="sh-save">Save&nbsp;JPG</button>
+  </div>
+  <div id="share-note"></div>
 </div>
 
 <script>
@@ -436,9 +451,12 @@ makeTowers();
 /* obstacle kinds: wall (dodge: full height, one lane), low (jump), bar (slide: overhead across lanes) */
 function spawnPattern(){
   const z = S.spawnZ;
-  const diff = Math.min(1, S.dist / 26000);          // 0 → 1 over ~26k units
+  const diff = Math.min(1, S.dist / 26000);          // 0 -> 1 over ~26k units
   const r = Math.random();
   const lanes = [-1, 0, 1];
+  /* gaps are measured in SECONDS at current speed, so no matter how fast the
+     run gets there is always time for two jumps (~1.5 s) or repeated slides */
+  const gap = (base, spread) => S.speed * (base + Math.random() * spread - diff * 0.10);
 
   if (r < 0.30){
     // low wall in 1-2 lanes + coin arc over one of them
@@ -446,36 +464,34 @@ function spawnPattern(){
     const picked = lanes.sort(() => Math.random() - 0.5).slice(0, n);
     picked.forEach(l => S.obstacles.push({ kind:"low", lane:l, z, h:130, w:0.94 }));
     coinArc(picked[0], z);
-    S.spawnZ += 1400 + Math.random() * 600;
+    S.spawnZ += gap(1.70, 0.45);
   } else if (r < 0.55){
     // tall walls blocking 2 lanes — thread the gap
     const open = lanes[Math.floor(Math.random() * 3)];
     lanes.filter(l => l !== open).forEach(l =>
       S.obstacles.push({ kind:"wall", lane:l, z, h:420, w:0.94 }));
     coinLine(open, z - 150, 5);
-    S.spawnZ += 1500 + Math.random() * 600;
+    S.spawnZ += gap(1.75, 0.45);
   } else if (r < 0.72){
     // overhead bar across everything — slide
     S.obstacles.push({ kind:"bar", lane:0, z, h:0, w:3.4 });
     coinLine(lanes[Math.floor(Math.random() * 3)], z + 260, 4);
-    S.spawnZ += 1400 + Math.random() * 550;
+    S.spawnZ += gap(1.70, 0.40);
   } else if (r < 0.86){
-    // chicane: wall then wall in another lane
+    // chicane: wall then wall in another lane, gap wide enough to re-dodge
     const a = lanes[Math.floor(Math.random() * 3)];
     let b = lanes[Math.floor(Math.random() * 3)];
     if (b === a) b = (a + 1 > 1) ? -1 : a + 1;
     S.obstacles.push({ kind:"wall", lane:a, z, h:420, w:0.94 });
-    S.obstacles.push({ kind:"wall", lane:b, z: z + 800 - diff * 160, h:420, w:0.94 });
+    S.obstacles.push({ kind:"wall", lane:b, z: z + S.speed * 0.70, h:420, w:0.94 });
     coinLine(a === 0 ? 1 : 0, z + 300, 3);
-    S.spawnZ += 2100 + Math.random() * 500;
+    S.spawnZ += gap(2.35, 0.50);
   } else {
     // pure coin river — breathing room that still rewards
     const l = lanes[Math.floor(Math.random() * 3)];
     coinLine(l, z, 8);
-    S.spawnZ += 1500 + Math.random() * 400;
+    S.spawnZ += gap(1.65, 0.40);
   }
-  // difficulty tightens the spacing
-  S.spawnZ -= diff * 260;
 }
 function coinLine(lane, z, n){
   for (let i = 0; i < n; i++)
@@ -624,7 +640,7 @@ function update(dt){
 
     // run cycle + footsteps on each footstrike
     const prevStride = Math.floor(S.runPhase / Math.PI);
-    S.runPhase += dt * (7 + S.speed / 260);
+    S.runPhase += dt * (6.4 + S.speed / 290);
     const curStride = Math.floor(S.runPhase / Math.PI);
     if (S.onGround && S.sliding <= 0 && curStride > prevStride)
       AudioSys.step(curStride % 2 === 0);
@@ -1181,31 +1197,39 @@ function drawPlayer(){
     const hipW = 0.085, shW = 0.16;
 
     const leg = (side, phase) => {
-      const l = air ? (S.vy > 0 ? 0.8 : 0.25) : Math.max(0, Math.sin(phase));
+      // eased lift: foot leaves the ground gently, snaps down at footstrike
+      const raw = Math.sin(phase);
+      const l = air ? (S.vy > 0 ? 0.8 : 0.25) : Math.pow(Math.max(0, raw), 0.8);
       const hx = hipSway + side * hipW;
       const kneeX = hipSway + side * (hipW + 0.015 + 0.10 * l);
-      const kneeY = 0.27 + 0.08 * l;
-      const footX = hipSway * 0.4 + side * (hipW - 0.015 + 0.06 * l);
-      const footY = air ? 0.10 + 0.18 * l : 0.02 + 0.34 * l;
+      const kneeY = 0.27 + 0.09 * l;
+      const footX = hipSway * 0.4 + side * (hipW - 0.015 + 0.07 * l);
+      const footY = air ? 0.10 + 0.18 * l : 0.015 + 0.34 * l;
       line([[hx, hipY], [kneeX, kneeY], [footX, footY]]);
+      // foot plate, tilting up as the heel kicks back
+      line([[footX, footY], [footX + side * (0.055 - 0.02 * l), footY - 0.015 + 0.03 * l]]);
     };
     const arm = (side, phase) => {
       const sw = air ? 0.9 : Math.sin(phase);
       const sx = -hipSway * 0.6 + side * shW;
-      const elbX = -hipSway * 0.6 + side * (shW + 0.055 + 0.03 * Math.max(0, -sw));
-      const elbY = shY - 0.17 + 0.03 * sw;
-      const hndX = -hipSway * 0.6 + side * (shW - 0.03 - 0.08 * Math.max(0, sw));
-      const hndY = air ? 0.72 : 0.50 + 0.16 * sw;
+      const elbX = -hipSway * 0.6 + side * (shW + 0.055 + 0.035 * Math.max(0, -sw));
+      const elbY = shY - 0.165 + 0.035 * sw;
+      const hndX = -hipSway * 0.6 + side * (shW - 0.035 - 0.085 * Math.max(0, sw));
+      const hndY = air ? 0.72 : 0.50 + 0.155 * sw;
       line([[sx, shY + (side > 0 ? roll : -roll)], [elbX, elbY], [hndX, hndY]]);
+      // hand
+      const [cx2, cy2] = s2(hndX, hndY);
+      ctx.beginPath(); ctx.arc(cx2, cy2, Math.max(1.5, u * 0.026), 0, Math.PI * 2);
+      ctx.fillStyle = S.suit; ctx.fill();
     };
     // far-swing limbs dimmer for depth
     ctx.globalAlpha = 0.65;
     leg(-1, ph + Math.PI); arm(1, ph + Math.PI);
     ctx.globalAlpha = 1;
     leg(1, ph); arm(-1, ph);
-    // hips, spine, shoulder bar (counter-rotating)
+    // hips, curved spine (pelvis -> chest -> neck), shoulder bar
     line([[hipSway - hipW, hipY], [hipSway + hipW, hipY]]);
-    line([[hipSway, hipY], [-hipSway * 0.6, shY]]);
+    line([[hipSway, hipY], [hipSway * 0.2, (hipY + shY) / 2 + 0.015], [-hipSway * 0.6, shY]]);
     line([[-hipSway * 0.6 - shW, shY - roll], [-hipSway * 0.6 + shW, shY + roll]]);
     // head
     const [hx, hy] = s2(-hipSway * 0.6, shY + 0.13);
@@ -1220,6 +1244,100 @@ function drawPlayer(){
   }
   ctx.restore();
 }
+
+
+/* ---------- share: card image + social buttons ---------- */
+const GAME_URL = "https://claude.ai/code/artifact/0c60082d-549b-4c76-83de-fb53ae75406b";
+function shareText(){
+  return "\u26a1 FUTURE RUN: corri " + Math.floor(S.dist / 100) +
+         " m e peguei " + S.coins + " coins! Consegue me bater? Jogue: " + GAME_URL;
+}
+function buildCard(){
+  const c = document.createElement("canvas");
+  c.width = 1080; c.height = 1350;
+  const g = c.getContext("2d");
+  g.fillStyle = "#040812"; g.fillRect(0, 0, c.width, c.height);
+  // death-moment screenshot as backdrop, cover-fit
+  const sw = canvas.width, sh = canvas.height;
+  const sc = Math.max(c.width / sw, c.height / sh);
+  g.drawImage(canvas, (c.width - sw * sc) / 2, (c.height - sh * sc) / 2, sw * sc, sh * sc);
+  const ov = g.createLinearGradient(0, 0, 0, c.height);
+  ov.addColorStop(0, "rgba(4,8,18,0.82)");
+  ov.addColorStop(0.4, "rgba(4,8,18,0.30)");
+  ov.addColorStop(1, "rgba(4,8,18,0.88)");
+  g.fillStyle = ov; g.fillRect(0, 0, c.width, c.height);
+  g.textAlign = "center";
+  g.font = "bold 92px 'Arial Narrow','Helvetica Neue',Arial,sans-serif";
+  g.shadowColor = "#00e5ff"; g.shadowBlur = 34;
+  g.strokeStyle = "rgba(0,229,255,0.95)"; g.lineWidth = 3;
+  g.strokeText("F U T U R E   R U N", 540, 170);
+  g.shadowBlur = 0; g.fillStyle = "#eaffff";
+  g.fillText("F U T U R E   R U N", 540, 170);
+  g.font = "bold 230px 'Lucida Console',monospace";
+  g.fillStyle = "#ffd447"; g.shadowColor = "#ffd447"; g.shadowBlur = 44;
+  g.fillText(Math.floor(S.dist / 100) + "m", 540, 760);
+  g.shadowBlur = 0;
+  g.font = "44px 'Lucida Console',monospace";
+  g.fillStyle = "#eaffff";
+  g.fillText(S.coins + " COINS", 540, 850);
+  if (Math.floor(S.dist / 100) >= S.best && S.best > 0){
+    g.fillStyle = "#ffd447";
+    g.font = "bold 52px 'Lucida Console',monospace";
+    g.fillText("\u2605 NEW RECORD \u2605", 540, 940);
+  }
+  g.fillStyle = "rgba(234,255,255,0.85)";
+  g.font = "30px 'Lucida Console',monospace";
+  g.fillText("JOGUE AGORA:", 540, 1230);
+  g.font = "26px 'Lucida Console',monospace";
+  g.fillStyle = "#00e5ff";
+  g.fillText(GAME_URL.replace("https://", ""), 540, 1275);
+  return c;
+}
+function cardBlob(){
+  // JPEG: much smaller than PNG for this glowing full-frame art
+  return new Promise(res => buildCard().toBlob(res, "image/jpeg", 0.86));
+}
+const noteEl = $("share-note");
+function note(t){ noteEl.textContent = t; setTimeout(() => { if (noteEl.textContent === t) noteEl.textContent = ""; }, 5000); }
+async function saveCard(){
+  const blob = await cardBlob();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "future-run-" + Math.floor(S.dist / 100) + "m.jpg";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+async function shareNative(){
+  try {
+    const blob = await cardBlob();
+    const file = new File([blob], "future-run.jpg", { type: "image/jpeg" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      await navigator.share({ files: [file], text: shareText() });
+      return true;
+    }
+    if (navigator.share){
+      await navigator.share({ text: shareText() });
+      return true;
+    }
+  } catch (e){ if (e && e.name === "AbortError") return true; }
+  return false;
+}
+$("sh-insta").addEventListener("click", async () => {
+  // no web URL for Instagram: native share sheet on mobile, else save + copy caption
+  if (!(await shareNative())){
+    await saveCard();
+    try { await navigator.clipboard.writeText(shareText()); } catch(e){}
+    note("imagem salva + legenda copiada \u2014 poste no Instagram");
+  }
+});
+$("sh-wa").addEventListener("click", () => {
+  window.open("https://wa.me/?text=" + encodeURIComponent(shareText()), "_blank", "noopener");
+});
+$("sh-fb").addEventListener("click", () => {
+  window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(GAME_URL) +
+              "&quote=" + encodeURIComponent(shareText()), "_blank", "noopener");
+});
+$("sh-save").addEventListener("click", async () => { await saveCard(); note("jpg salvo"); });
 
 /* ---------- title lettering (canvas, neon trace) ---------- */
 (function drawTitle(){
