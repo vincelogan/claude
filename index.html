@@ -162,10 +162,10 @@ resize();
 
 /* ---------- world constants ---------- */
 const LANE_W   = 230;          // world units between lanes
-const CAM_H    = 340;          // camera height above ground
-const FOCAL    = 640;          // projection focal length
+const CAM_H    = 430;          // camera height above ground
+const FOCAL    = 560;          // projection focal length (lower = wider view)
 const NEAR     = 60;           // clip in front of camera
-const PLAYER_Z = 560;          // player distance ahead of camera
+const PLAYER_Z = 980;          // player distance ahead of camera
 const DRAW_Z   = 9000;         // farthest visible depth
 const GRAVITY  = -3800;
 const JUMP_V   = 1450;
@@ -228,10 +228,14 @@ const AudioSys = (() => {
     coin(combo){
       if (!ac || muted) return;
       const t = ac.currentTime;
-      // Mario-style two-note blip, pitched up with combo
-      const base = 988 * Math.pow(1.0595, Math.min(combo, 12));
-      tone(base, "square", t, 0.005, 0.07, 0.16);
-      tone(base * 1.335, "square", t + 0.07, 0.005, 0.16, 0.16);
+      // warm rising chime: pentatonic step-up with the combo, root + fifth
+      const PENT = [0, 2, 4, 7, 9];
+      const idx = Math.min(combo, 14);
+      const semi = PENT[idx % 5] + 12 * Math.floor(idx / 5);
+      const f = 440 * Math.pow(2, semi / 12);
+      tone(f, "triangle", t, 0.008, 0.20, 0.24);
+      tone(f * 1.5, "triangle", t + 0.05, 0.01, 0.18, 0.13);
+      tone(f * 2, "sine", t + 0.02, 0.01, 0.12, 0.06);
     },
     jump(){
       if (!ac || muted) return;
@@ -663,7 +667,26 @@ function draw(){
   vg.addColorStop(1, "rgba(2,4,10,0.55)");
   ctx.fillStyle = vg;
   ctx.fillRect(0, 0, W, H);
+
+  // faint CRT scanlines
+  if (scanPat){
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = scanPat;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+  }
 }
+
+/* scanline pattern, built once */
+let scanPat = null;
+(function(){
+  const sc = document.createElement("canvas");
+  sc.width = 2; sc.height = 3;
+  const c2 = sc.getContext("2d");
+  c2.fillStyle = "rgba(0,0,0,0.22)";
+  c2.fillRect(0, 0, 2, 1);
+  scanPat = ctx.createPattern(sc, "repeat");
+})();
 
 function drawSky(){
   // portal sun on the horizon
@@ -683,6 +706,30 @@ function drawSky(){
     ctx.fillRect(st.x * W, st.y * HORIZON, st.r, st.r);
   }
   ctx.globalAlpha = 1;
+
+  // synthwave sun sinking into the grid
+  const sr = Math.min(W, H) * 0.21;
+  const sy = HORIZON + sr * 0.32;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, W, HORIZON); ctx.clip();
+  const sunGlow = ctx.createRadialGradient(CX, sy, sr * 0.4, CX, sy, sr * 2.4);
+  sunGlow.addColorStop(0, "rgba(255,138,60,0.28)");
+  sunGlow.addColorStop(1, "rgba(255,47,214,0)");
+  ctx.fillStyle = sunGlow;
+  ctx.fillRect(CX - sr * 2.4, sy - sr * 2.4, sr * 4.8, sr * 2.4);
+  const sg = ctx.createLinearGradient(0, sy - sr, 0, sy + sr * 0.4);
+  sg.addColorStop(0, "#ffd447");
+  sg.addColorStop(0.55, "#ff8a3c");
+  sg.addColorStop(1, "#ff2fd6");
+  ctx.fillStyle = sg;
+  ctx.beginPath(); ctx.arc(CX, sy, sr, 0, Math.PI * 2); ctx.fill();
+  // retro slices, thicker toward the horizon
+  ctx.fillStyle = "#02040c";
+  for (let i = 0; i < 6; i++){
+    const yy = sy - sr + sr * (0.9 + i * 0.20);
+    ctx.fillRect(CX - sr - 4, yy, sr * 2 + 8, 1.5 + i * 2.2);
+  }
+  ctx.restore();
 
   // glow band on horizon
   const hg = ctx.createLinearGradient(0, HORIZON - 70, 0, HORIZON + 10);
@@ -899,104 +946,105 @@ function drawParticle(p){
 
 function drawPlayer(){
   const x = S.laneX * LANE_W;
-  const z = PLAYER_Z;
-  const p0 = project(x, S.y, z);
+  const p0 = project(x, S.y, PLAYER_Z);
+  const pg = project(x, 0, PLAYER_Z);          // ground under the runner
   const scale = p0.s;
-  const u = 225 * scale;                  // player height in px (standing)
-  const px = p0.x, py = p0.y;             // feet position
+  const u = 235 * scale;                        // standing height in px
+  const px = p0.x, py = p0.y;                   // feet position
   const slide = S.sliding > 0;
+  const air = !S.onGround;
   const ph = S.runPhase;
+  const s2 = (fx, fy) => [px + fx * u, py - fy * u];
+
+  // ground glow + light trail
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const gw = u * (air ? 0.45 : 0.75);
+  const gg = ctx.createRadialGradient(pg.x, pg.y, 0, pg.x, pg.y, gw);
+  gg.addColorStop(0, "rgba(0,229,255,0.35)");
+  gg.addColorStop(1, "rgba(0,229,255,0)");
+  ctx.fillStyle = gg;
+  ctx.beginPath();
+  ctx.ellipse(pg.x, pg.y, gw, gw * 0.28, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const tg = ctx.createLinearGradient(pg.x, pg.y, pg.x, Math.min(H, pg.y + u * 1.3));
+  tg.addColorStop(0, "rgba(0,229,255,0.4)");
+  tg.addColorStop(1, "rgba(0,229,255,0)");
+  ctx.fillStyle = tg;
+  ctx.fillRect(pg.x - u * 0.05, pg.y, u * 0.1, u * 1.3);
+  ctx.restore();
 
   ctx.save();
-  ctx.lineWidth = Math.max(2, 8 * scale);
+  ctx.lineWidth = Math.max(2.5, 9 * scale);
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.strokeStyle = COLORS.cyan;
   ctx.shadowColor = COLORS.cyan;
-  ctx.shadowBlur = 16;
+  ctx.shadowBlur = 12;
 
-  // ground light trail
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-  const tg = ctx.createLinearGradient(px, py, px, Math.min(H, py + u * 1.1));
-  tg.addColorStop(0, "rgba(0,229,255,0.5)");
-  tg.addColorStop(1, "rgba(0,229,255,0)");
-  ctx.fillStyle = tg;
-  ctx.fillRect(px - u * 0.06, py, u * 0.12, u * 1.1);
-  ctx.restore();
-
-  const s = (fx, fy) => [px + fx * u, py - fy * u];
+  const line = pts => {
+    ctx.beginPath();
+    ctx.moveTo(...s2(pts[0][0], pts[0][1]));
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(...s2(pts[i][0], pts[i][1]));
+    ctx.stroke();
+  };
 
   if (slide){
-    // crouched capsule slide
-    const [hx, hy] = s(0.12, 0.42);
-    ctx.beginPath();
-    ctx.moveTo(...s(-0.34, 0.12));
-    ctx.quadraticCurveTo(...s(-0.1, 0.5), hx, hy);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(...s(-0.34, 0.12)); ctx.lineTo(...s(0.3, 0.08));
-    ctx.stroke();
+    /* low crouch seen from behind: wide stance, tucked body */
+    line([[-0.28, 0.03], [-0.16, 0.16], [-0.08, 0.10]]);   // left leg splayed
+    line([[ 0.28, 0.03], [ 0.16, 0.16], [ 0.08, 0.10]]);   // right leg splayed
+    line([[-0.20, 0.12], [-0.20, 0.24]]);                  // arms braced back
+    line([[ 0.20, 0.12], [ 0.20, 0.24]]);
+    line([[-0.18, 0.26], [0.18, 0.26]]);                   // hunched shoulder bar
+    line([[0, 0.14], [0, 0.26]]);                          // short spine
+    const [hx, hy] = s2(0, 0.36);
     ctx.fillStyle = COLORS.hot;
-    ctx.beginPath();
-    ctx.arc(hx, hy, u * 0.085, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.arc(hx, hy, u * 0.075, 0, Math.PI * 2); ctx.fill();
   } else {
-    /* smooth gait: feet ride elliptical paths, knees/elbows solved by 2-bone IK
-       (coords are fractions of u: x forward, y up from the feet) */
-    const air = !S.onGround;
-    const ik = (ax, ay, bx, by, l1, l2, bend) => {
-      const dx = bx - ax, dy = by - ay;
-      const d = Math.min(Math.hypot(dx, dy), l1 + l2 - 0.001);
-      const a = Math.acos(Math.max(-1, Math.min(1, (l1*l1 + d*d - l2*l2) / (2*l1*d))));
-      const base = Math.atan2(dy, dx);
-      return [ax + Math.cos(base + a * bend) * l1, ay + Math.sin(base + a * bend) * l1];
-    };
-    const bob = air ? 0 : Math.abs(Math.cos(ph)) * 0.028;
-    const lean = 0.05 + Math.min(0.05, S.speed / 40000);
-    const hip = [0.0, 0.50 - bob], sh = [lean * 1.6, 0.84 - bob];
+    /* back view: legs pump alternately, heels kick up toward the camera */
+    const roll = air ? 0 : Math.sin(ph) * 0.022;           // shoulder sway
+    const bob  = air ? 0 : Math.abs(Math.cos(ph)) * 0.025; // stride bounce
+    const hipY = 0.50 - bob, shY = 0.84 - bob;
+    const hipW = 0.085, shW = 0.16;
 
-    const foot = phase => {
-      if (air){
-        // tuck front leg, trail back leg; extend when falling
-        const fall = S.vy < 0 ? 0.1 : 0;
-        return Math.sin(phase) > 0 ? [0.26, 0.30 - fall] : [-0.18, 0.20 - fall];
-      }
-      const c = Math.cos(phase), sn = Math.sin(phase);
-      return [hip[0] + 0.03 + c * 0.185, Math.max(0.015, sn * 0.17)];
+    const leg = (side, phase) => {
+      const l = air ? (S.vy > 0 ? 0.8 : 0.25) : Math.max(0, Math.sin(phase));
+      const hx = side * hipW;
+      const kneeX = side * (hipW + 0.02 + 0.09 * l);
+      const kneeY = 0.27 + 0.05 * l;
+      const footX = side * (hipW + 0.05 * l);
+      const footY = air ? 0.10 + 0.18 * l : 0.02 + 0.30 * l;
+      line([[hx, hipY], [kneeX, kneeY], [footX, footY]]);
     };
-    const hand = phase => {   // arms swing opposite the legs
-      const sw = air ? 0.8 : Math.sin(phase + Math.PI);
-      return [sh[0] + 0.05 + sw * 0.15, 0.52 + Math.abs(sw) * 0.05];
+    const arm = (side, phase) => {
+      const sw = air ? 0.9 : Math.sin(phase);
+      const sx = side * shW;
+      const elbX = side * (shW + 0.065);
+      const elbY = shY - 0.17 + 0.02 * sw;
+      const hndX = side * (shW - 0.02 - 0.07 * Math.max(0, sw));
+      const hndY = air ? 0.72 : 0.54 + 0.12 * sw;
+      line([[sx, shY + (side > 0 ? roll : -roll)], [elbX, elbY], [hndX, hndY]]);
     };
-    const seg = (a, b, c) => {
-      ctx.beginPath();
-      ctx.moveTo(...s(a[0], a[1]));
-      ctx.lineTo(...s(b[0], b[1]));
-      ctx.lineTo(...s(c[0], c[1]));
-      ctx.stroke();
-    };
-    // back limbs first, slightly dimmer for depth
-    const fB = foot(ph + Math.PI), kB = ik(hip[0], hip[1], fB[0], fB[1], 0.27, 0.27, 1);
-    const hB = hand(ph + Math.PI), eB = ik(sh[0], sh[1], hB[0], hB[1], 0.17, 0.18, -1);
-    ctx.globalAlpha = 0.6;
-    seg(hip, kB, fB); seg(sh, eB, hB);
+    // far-swing limbs dimmer for depth
+    ctx.globalAlpha = 0.65;
+    leg(-1, ph + Math.PI); arm(1, ph + Math.PI);
     ctx.globalAlpha = 1;
-    // torso
-    ctx.beginPath();
-    ctx.moveTo(...s(hip[0], hip[1])); ctx.lineTo(...s(sh[0], sh[1]));
-    ctx.stroke();
-    // front limbs
-    const fA = foot(ph), kA = ik(hip[0], hip[1], fA[0], fA[1], 0.27, 0.27, 1);
-    const hA = hand(ph), eA = ik(sh[0], sh[1], hA[0], hA[1], 0.17, 0.18, -1);
-    seg(hip, kA, fA); seg(sh, eA, hA);
+    leg(1, ph); arm(-1, ph);
+    // hips, spine, shoulder bar (with sway)
+    line([[-hipW, hipY], [hipW, hipY]]);
+    line([[0, hipY], [0, shY]]);
+    line([[-shW, shY - roll], [shW, shY + roll]]);
     // head
-    const [hx, hy] = s(sh[0] + 0.045, sh[1] + 0.115);
+    const [hx, hy] = s2(0, shY + 0.13);
     ctx.fillStyle = COLORS.hot;
-    ctx.shadowBlur = 20;
-    ctx.beginPath();
-    ctx.arc(hx, hy, u * 0.072, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.arc(hx, hy, u * 0.072, 0, Math.PI * 2); ctx.fill();
+    // helmet visor stripe
+    ctx.strokeStyle = COLORS.cyan;
+    ctx.lineWidth = Math.max(1.5, 4 * scale);
+    ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(hx, hy, u * 0.072, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
   }
   ctx.restore();
 }
