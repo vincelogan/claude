@@ -190,8 +190,15 @@ function project(x, y, z){
 
 /* ---------- audio ---------- */
 const AudioSys = (() => {
-  let ac = null, master = null, muted = false, musicTimer = null, step = 0;
-  const BASS = [55, 55, 65.4, 49];     // A1 A1 C2 G1 — pulsing grid bass
+  let ac = null, master = null, muted = false, musicTimer = null;
+  let seqIdx = 0, nextNoteT = 0;
+  /* "In the Hall of the Mountain King" (Grieg, public domain) — synthwave chiptune.
+     MIDI notes, 8ths; 0 = rest. Tempo accelerates with game speed, like the original. */
+  const MK_A = [52,54,55,57, 59,55,59,59];
+  const MK_B = [58,54,58,58, 57,53,57,57];
+  const MK_SEQ = [].concat(MK_A, MK_B, MK_A, MK_B,
+                           MK_A.map(n=>n+12), MK_B.map(n=>n+12), MK_A.map(n=>n+12), MK_B.map(n=>n+12));
+  const midiHz = n => 440 * Math.pow(2, (n - 69) / 12);
   function ensure(){
     if (!ac){
       ac = new (window.AudioContext || window.webkitAudioContext)();
@@ -269,18 +276,38 @@ const AudioSys = (() => {
       const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1200;
       src.connect(f); f.connect(ng); ng.connect(master); src.start(t);
     },
+    step(alt){
+      if (!ac || muted) return;
+      const t = ac.currentTime;
+      // soft footfall thump, alternating pitch per foot
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(alt ? 170 : 140, t);
+      o.frequency.exponentialRampToValueAtTime(55, t + 0.07);
+      env(g, t, 0.004, 0.075, 0.16);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.1);
+    },
     startMusic(){
       ensure();
       if (musicTimer) return;
-      step = 0;
+      seqIdx = 0;
+      nextNoteT = ac.currentTime + 0.15;
       musicTimer = setInterval(() => {
-        if (!ac || muted) return;
-        const t = ac.currentTime;
-        tone(BASS[step % 4], "sawtooth", t, 0.01, 0.20, 0.20);
-        tone(BASS[step % 4] * 2, "square", t, 0.01, 0.10, 0.05);
-        if (step % 2 === 0) tone(2400, "square", t, 0.002, 0.03, 0.025); // hat tick
-        step++;
-      }, 250);
+        if (!ac) return;
+        // tempo follows the run — Grieg's accelerando, gamified
+        const drive = S.mode === "play" ? Math.min(1, (S.speed - 1350) / 2050) : 0;
+        const eighth = (60 / (104 + drive * 84)) / 2;
+        while (nextNoteT < ac.currentTime + 0.25){
+          const t = nextNoteT, n = MK_SEQ[seqIdx % MK_SEQ.length];
+          if (n){
+            tone(midiHz(n), "square", t, 0.008, eighth * 0.85, 0.085);
+            tone(midiHz(n - 12), "triangle", t, 0.008, eighth * 0.85, 0.075);
+          }
+          if (seqIdx % 4 === 0) tone(41.2, "sawtooth", t, 0.01, eighth * 1.6, 0.14); // E1 pedal
+          if (seqIdx % 2 === 1) tone(2600, "square", t, 0.002, 0.025, 0.014);        // hat
+          seqIdx++; nextNoteT += eighth;
+        }
+      }, 60);
     },
     stopMusic(){
       if (musicTimer){ clearInterval(musicTimer); musicTimer = null; }
@@ -342,33 +369,33 @@ function spawnPattern(){
     const picked = lanes.sort(() => Math.random() - 0.5).slice(0, n);
     picked.forEach(l => S.obstacles.push({ kind:"low", lane:l, z, h:130, w:0.94 }));
     coinArc(picked[0], z);
-    S.spawnZ += 950 + Math.random() * 500;
+    S.spawnZ += 1400 + Math.random() * 600;
   } else if (r < 0.55){
     // tall walls blocking 2 lanes — thread the gap
     const open = lanes[Math.floor(Math.random() * 3)];
     lanes.filter(l => l !== open).forEach(l =>
       S.obstacles.push({ kind:"wall", lane:l, z, h:420, w:0.94 }));
     coinLine(open, z - 150, 5);
-    S.spawnZ += 1050 + Math.random() * 500;
+    S.spawnZ += 1500 + Math.random() * 600;
   } else if (r < 0.72){
     // overhead bar across everything — slide
     S.obstacles.push({ kind:"bar", lane:0, z, h:0, w:3.4 });
     coinLine(lanes[Math.floor(Math.random() * 3)], z + 260, 4);
-    S.spawnZ += 950 + Math.random() * 450;
+    S.spawnZ += 1400 + Math.random() * 550;
   } else if (r < 0.86){
     // chicane: wall then wall in another lane
     const a = lanes[Math.floor(Math.random() * 3)];
     let b = lanes[Math.floor(Math.random() * 3)];
     if (b === a) b = (a + 1 > 1) ? -1 : a + 1;
     S.obstacles.push({ kind:"wall", lane:a, z, h:420, w:0.94 });
-    S.obstacles.push({ kind:"wall", lane:b, z: z + 620 - diff * 160, h:420, w:0.94 });
+    S.obstacles.push({ kind:"wall", lane:b, z: z + 800 - diff * 160, h:420, w:0.94 });
     coinLine(a === 0 ? 1 : 0, z + 300, 3);
-    S.spawnZ += 1500 + Math.random() * 400;
+    S.spawnZ += 2100 + Math.random() * 500;
   } else {
     // pure coin river — breathing room that still rewards
     const l = lanes[Math.floor(Math.random() * 3)];
     coinLine(l, z, 8);
-    S.spawnZ += 1100 + Math.random() * 300;
+    S.spawnZ += 1500 + Math.random() * 400;
   }
   // difficulty tightens the spacing
   S.spawnZ -= diff * 260;
@@ -450,7 +477,7 @@ function startGame(){
   Object.assign(S, {
     mode:"play", speed:1350, dist:0, score:0, coins:0, combo:0, comboTime:0,
     lane:0, laneX:0, y:0, vy:0, onGround:true, sliding:0,
-    shake:0, flash:0, spawnZ:2600,
+    shake:0, flash:0, spawnZ:3200,
     obstacles:[], coins$:[], parts:[]
   });
   makeTowers();
@@ -506,12 +533,16 @@ function update(dt){
     if (!S.onGround){
       S.vy += GRAVITY * dt;
       S.y += S.vy * dt;
-      if (S.y <= 0){ S.y = 0; S.vy = 0; S.onGround = true; }
+      if (S.y <= 0){ S.y = 0; S.vy = 0; S.onGround = true; AudioSys.step(true); }
     }
     if (S.sliding > 0) S.sliding -= dt;
 
-    // run cycle
+    // run cycle + footsteps on each footstrike
+    const prevStride = Math.floor(S.runPhase / Math.PI);
     S.runPhase += dt * (7 + S.speed / 260);
+    const curStride = Math.floor(S.runPhase / Math.PI);
+    if (S.onGround && S.sliding <= 0 && curStride > prevStride)
+      AudioSys.step(curStride % 2 === 0);
 
     // combo decay
     if (S.comboTime > 0){
@@ -911,46 +942,60 @@ function drawPlayer(){
     ctx.arc(hx, hy, u * 0.085, 0, Math.PI * 2);
     ctx.fill();
   } else {
+    /* smooth gait: feet ride elliptical paths, knees/elbows solved by 2-bone IK
+       (coords are fractions of u: x forward, y up from the feet) */
     const air = !S.onGround;
-    const legA = air ? 0.9 : Math.sin(ph);
-    const legB = air ? -0.6 : Math.sin(ph + Math.PI);
-    const armA = air ? 1.4 : Math.sin(ph + Math.PI);
-    const armB = air ? 1.4 : Math.sin(ph);
-    const bob = air ? 0 : Math.abs(Math.sin(ph)) * 0.03;
-    const hipY = 0.46 - bob, shY = 0.82 - bob;
+    const ik = (ax, ay, bx, by, l1, l2, bend) => {
+      const dx = bx - ax, dy = by - ay;
+      const d = Math.min(Math.hypot(dx, dy), l1 + l2 - 0.001);
+      const a = Math.acos(Math.max(-1, Math.min(1, (l1*l1 + d*d - l2*l2) / (2*l1*d))));
+      const base = Math.atan2(dy, dx);
+      return [ax + Math.cos(base + a * bend) * l1, ay + Math.sin(base + a * bend) * l1];
+    };
+    const bob = air ? 0 : Math.abs(Math.cos(ph)) * 0.028;
+    const lean = 0.05 + Math.min(0.05, S.speed / 40000);
+    const hip = [0.0, 0.50 - bob], sh = [lean * 1.6, 0.84 - bob];
 
-    // legs
+    const foot = phase => {
+      if (air){
+        // tuck front leg, trail back leg; extend when falling
+        const fall = S.vy < 0 ? 0.1 : 0;
+        return Math.sin(phase) > 0 ? [0.26, 0.30 - fall] : [-0.18, 0.20 - fall];
+      }
+      const c = Math.cos(phase), sn = Math.sin(phase);
+      return [hip[0] + 0.03 + c * 0.185, Math.max(0.015, sn * 0.17)];
+    };
+    const hand = phase => {   // arms swing opposite the legs
+      const sw = air ? 0.8 : Math.sin(phase + Math.PI);
+      return [sh[0] + 0.05 + sw * 0.15, 0.52 + Math.abs(sw) * 0.05];
+    };
+    const seg = (a, b, c) => {
+      ctx.beginPath();
+      ctx.moveTo(...s(a[0], a[1]));
+      ctx.lineTo(...s(b[0], b[1]));
+      ctx.lineTo(...s(c[0], c[1]));
+      ctx.stroke();
+    };
+    // back limbs first, slightly dimmer for depth
+    const fB = foot(ph + Math.PI), kB = ik(hip[0], hip[1], fB[0], fB[1], 0.27, 0.27, 1);
+    const hB = hand(ph + Math.PI), eB = ik(sh[0], sh[1], hB[0], hB[1], 0.17, 0.18, -1);
+    ctx.globalAlpha = 0.6;
+    seg(hip, kB, fB); seg(sh, eB, hB);
+    ctx.globalAlpha = 1;
+    // torso
     ctx.beginPath();
-    ctx.moveTo(...s(0, hipY));
-    ctx.lineTo(...s(0.16 * legA, hipY - 0.22));
-    ctx.lineTo(...s(0.16 * legA + 0.1 * Math.max(0, legA), hipY - 0.46 + (air ? 0.12 : 0)));
+    ctx.moveTo(...s(hip[0], hip[1])); ctx.lineTo(...s(sh[0], sh[1]));
     ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(...s(0, hipY));
-    ctx.lineTo(...s(0.16 * legB, hipY - 0.22));
-    ctx.lineTo(...s(0.16 * legB + 0.1 * Math.max(0, legB), hipY - 0.46 + (air ? 0.12 : 0)));
-    ctx.stroke();
-    // torso (lean forward)
-    ctx.beginPath();
-    ctx.moveTo(...s(0, hipY)); ctx.lineTo(...s(0.09, shY));
-    ctx.stroke();
-    // arms
-    ctx.beginPath();
-    ctx.moveTo(...s(0.09, shY));
-    ctx.lineTo(...s(0.09 + 0.14 * armA, shY - 0.14));
-    ctx.lineTo(...s(0.09 + 0.14 * armA + 0.12, shY - 0.1 + 0.1 * armA));
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(...s(0.09, shY));
-    ctx.lineTo(...s(0.09 + 0.14 * armB, shY - 0.14));
-    ctx.lineTo(...s(0.09 + 0.14 * armB + 0.12, shY - 0.1 + 0.1 * armB));
-    ctx.stroke();
+    // front limbs
+    const fA = foot(ph), kA = ik(hip[0], hip[1], fA[0], fA[1], 0.27, 0.27, 1);
+    const hA = hand(ph), eA = ik(sh[0], sh[1], hA[0], hA[1], 0.17, 0.18, -1);
+    seg(hip, kA, fA); seg(sh, eA, hA);
     // head
-    const [hx, hy] = s(0.13, shY + 0.13);
+    const [hx, hy] = s(sh[0] + 0.045, sh[1] + 0.115);
     ctx.fillStyle = COLORS.hot;
     ctx.shadowBlur = 20;
     ctx.beginPath();
-    ctx.arc(hx, hy, u * 0.075, 0, Math.PI * 2);
+    ctx.arc(hx, hy, u * 0.072, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
