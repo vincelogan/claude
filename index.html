@@ -227,8 +227,12 @@ function suitGlow(a){
 function project(x, y, z){
   // z: distance ahead of camera. returns screen coords + scale
   const s = FOCAL / z;
-  return { x: CX + x * s, y: HORIZON + (CAM_H - y) * s, s };
+  // active 90-degree turn: the road ahead bends toward the new heading
+  const t = Math.max(0, z - PLAYER_Z) / (DRAW_Z - PLAYER_Z);
+  const bx = S.curve * 4200 * t * t;
+  return { x: CX + (x + bx) * s, y: HORIZON + (CAM_H - y) * s, s };
 }
+function wrapAngle(h){ return ((h % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI; }
 
 /* ---------- audio ---------- */
 const AudioSys = (() => {
@@ -331,6 +335,33 @@ const AudioSys = (() => {
       womp(233, 147, 1.08, 1.10, 0.60);   // waaaaah... (long fall)
       tone(41.2, "sine", t + 2.0, 0.02, 0.8, 0.45);  // final low thud
     },
+    speedup(){
+      if (!ac || muted) return;
+      const t = ac.currentTime;
+      tone(523, "square", t, 0.008, 0.10, 0.14);
+      tone(784, "square", t + 0.09, 0.008, 0.12, 0.14);
+      tone(1046, "square", t + 0.18, 0.008, 0.18, 0.12);
+    },
+    nitro(){
+      if (!ac || muted) return;
+      const t = ac.currentTime;
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(110, t);
+      o.frequency.exponentialRampToValueAtTime(880, t + 0.5);
+      env(g, t, 0.02, 0.55, 0.28);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.62);
+      const len = ac.sampleRate * 0.7, buf = ac.createBuffer(1, len, ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (i / len);
+      const src = ac.createBufferSource(); src.buffer = buf;
+      const f = ac.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 1.2;
+      f.frequency.setValueAtTime(400, t);
+      f.frequency.exponentialRampToValueAtTime(4200, t + 0.7);
+      const ng = ac.createGain(); ng.gain.value = 0.22;
+      src.connect(f); f.connect(ng); ng.connect(master); src.start(t);
+      [220, 330, 440].forEach(fq => tone(fq, "square", t + 0.5, 0.01, 0.32, 0.11));
+    },
     record(){
       /* live new-record splash: sparkling ascending glissando */
       if (!ac || muted) return;
@@ -417,6 +448,8 @@ const S = {
   runPhase: 0,
   shake: 0, flash: 0, pulse: 0,
   milestone: 0, suit: SUITS[0],
+  nitro: 0, curve: 0, heading: 0, turn: null,
+  nextTurnAt: 30000, nextSpeedAt: 30000,
   time: 0, best: 0,
   spawnZ: 2600,             // world z of next pattern
   obstacles: [], coins$: [], parts: [], floaters: [], stars: [], towers: []
@@ -571,6 +604,8 @@ function startGame(){
     mode:"play", speed:1350, dist:0, coins:0, combo:0, comboTime:0, recordSplashed:false,
     lane:0, laneX:0, y:0, vy:0, onGround:true, sliding:0,
     shake:0, flash:0, pulse:0, milestone:0, suit:SUITS[0], spawnZ:3200,
+    nitro:0, curve:0, heading:0, turn:null,
+    nextTurnAt:28000 + Math.random() * 17000, nextSpeedAt:30000,
     obstacles:[], coins$:[], parts:[], floaters:[]
   });
   coinsEl.style.color = ""; coinsEl.style.textShadow = "";
@@ -613,10 +648,40 @@ function die(){
 /* ---------- update ---------- */
 function update(dt){
   if (S.mode === "play"){
-    // speed ramps forever, softly
-    S.speed = Math.min(3400, S.speed + dt * 26);
-    const dz = S.speed * dt;
+    // gentle continuous ramp + a hard SPEED UP step every 300 m
+    S.speed = Math.min(3600, S.speed + dt * 8);
+    if (S.dist >= S.nextSpeedAt){
+      S.nextSpeedAt += 30000;
+      S.speed = Math.min(3600, S.speed + 160);
+      AudioSys.speedup();
+      S.floaters.push({ x: 0, y: 400, z: PLAYER_Z + 500,
+                        txt: "SPEED UP!", life: 1.3, big: true, color: COLORS.cyan });
+    }
+    // nitro sprint: over-speed, invincible, plows through obstacles
+    const eff = S.nitro > 0 ? S.speed * 1.55 : S.speed;
+    const dz = eff * dt;
     S.dist += dz;
+    if (S.nitro > 0) S.nitro -= dz;
+    // random 90-degree turns
+    if (!S.turn && S.dist >= S.nextTurnAt){
+      S.turn = { t: 0, dir: Math.random() < 0.5 ? -1 : 1, h0: S.heading };
+      S.floaters.push({ x: 0, y: 430, z: PLAYER_Z + 700,
+                        txt: S.turn.dir > 0 ? "TURN \u25b6" : "\u25c0 TURN",
+                        life: 1.4, big: true, color: COLORS.hot });
+    }
+    if (S.turn){
+      const T = S.turn, IN = 1.0, HOLD = 1.2, OUT = 1.0, TOTAL = IN + HOLD + OUT;
+      T.t += dt;
+      let c = T.t < IN ? T.t / IN : (T.t < IN + HOLD ? 1 : Math.max(0, 1 - (T.t - IN - HOLD) / OUT));
+      c = c * c * (3 - 2 * c);
+      S.curve = T.dir * c;
+      S.heading = T.h0 + T.dir * (Math.PI / 2) * Math.min(1, T.t / TOTAL);
+      if (T.t >= TOTAL){
+        S.heading = T.h0 + T.dir * Math.PI / 2;
+        S.curve = 0; S.turn = null;
+        S.nextTurnAt = S.dist + 25000 + Math.random() * 20000;
+      }
+    }
     metersEl.textContent = Math.floor(S.dist / 100).toLocaleString("en-US");
     // live record splash the moment you pass your old best
     if (!S.recordSplashed && S.best > 0 && S.dist / 100 > S.best){
@@ -640,7 +705,7 @@ function update(dt){
 
     // run cycle + footsteps on each footstrike
     const prevStride = Math.floor(S.runPhase / Math.PI);
-    S.runPhase += dt * (6.4 + S.speed / 290);
+    S.runPhase += dt * (6.4 + eff / 290);
     const curStride = Math.floor(S.runPhase / Math.PI);
     if (S.onGround && S.sliding <= 0 && curStride > prevStride)
       AudioSys.step(curStride % 2 === 0);
@@ -669,7 +734,23 @@ function update(dt){
     const pBot = S.y;
     for (const o of S.obstacles){
       const oz = o.z - PLAYER_Z;
-      if (oz > -70 && oz < 70){
+      if (oz > -90 && oz < 90){
+        if (S.nitro > 0){
+          // nitro plows straight through — obstacle derezzes instead of you
+          o.dead = true;
+          S.shake = Math.max(S.shake, 0.25);
+          const col = o.kind === "bar" ? "hot" : "hot";
+          for (let i = 0; i < 22; i++){
+            S.parts.push({
+              x: (o.kind === "bar" ? (Math.random() - .5) * 3 * LANE_W : o.lane * LANE_W + (Math.random() - .5) * 180),
+              y: Math.random() * 320, z: o.z,
+              vx: (Math.random() - .5) * 900, vy: Math.random() * 1000,
+              vz: (Math.random()) * 400, life: 0.6 + Math.random() * 0.4,
+              c: col, sz: 5 + Math.random() * 8
+            });
+          }
+          continue;
+        }
         if (o.kind === "bar"){
           // overhead: gap below h=150; collide if standing (not sliding, not high jump)
           if (pTop > 165 && pBot < 380) { die(); return; }
@@ -678,6 +759,7 @@ function update(dt){
         }
       }
     }
+    if (S.obstacles.some(o => o.dead)) S.obstacles = S.obstacles.filter(o => !o.dead);
     // coins — generous magnet
     for (const c of S.coins$){
       const cz = c.z - PLAYER_Z;
@@ -716,6 +798,12 @@ function update(dt){
                             big: true, color: S.suit });
           coinsEl.style.color = S.suit;
           coinsEl.style.textShadow = "0 0 14px " + S.suit;
+          if (ms % 5 === 0){
+            S.nitro = 5000;   // 50 m of nitro sprint
+            AudioSys.nitro();
+            S.floaters.push({ x: 0, y: 480, z: PLAYER_Z + 400,
+                              txt: "NITRO! 50m", life: 1.6, big: true, color: "#ffffff" });
+          }
         }
       }
     }
@@ -748,6 +836,12 @@ function draw(){
     const s = S.shake * 14;
     ctx.translate((Math.random() - .5) * s, (Math.random() - .5) * s);
   }
+  if (S.curve){
+    // bank into the corner
+    ctx.translate(CX, H * 0.62);
+    ctx.rotate(-S.curve * 0.055);
+    ctx.translate(-CX, -H * 0.62);
+  }
 
   drawSky();
   drawTowers();
@@ -772,6 +866,25 @@ function draw(){
     else drawParticle(it.e);
   }
   if (!playerDrawn && S.mode === "play") drawPlayer();
+
+  if (S.nitro > 0 && S.mode === "play"){
+    // radial speed streaks
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.strokeStyle = "rgba(234,255,255,0.5)";
+    ctx.lineWidth = 2;
+    const cy0 = H * 0.55;
+    for (let i = 0; i < 12; i++){
+      const a = Math.random() * Math.PI * 2;
+      const r1 = H * (0.18 + Math.random() * 0.22), r2 = r1 + H * (0.15 + Math.random() * 0.2);
+      ctx.globalAlpha = 0.12 + Math.random() * 0.25;
+      ctx.beginPath();
+      ctx.moveTo(CX + Math.cos(a) * r1, cy0 + Math.sin(a) * r1);
+      ctx.lineTo(CX + Math.cos(a) * r2, cy0 + Math.sin(a) * r2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
 
   // floating score/reward text
   for (const f of S.floaters){
@@ -847,34 +960,48 @@ function drawSky(){
   // stars
   const tNow = S.time;
   ctx.fillStyle = "rgba(180,240,255,0.8)";
+  const starShift = S.heading / (Math.PI * 2);
   for (const st of S.stars){
     const a = 0.25 + 0.6 * Math.abs(Math.sin(tNow * 0.8 + st.tw));
     ctx.globalAlpha = a;
-    ctx.fillRect(st.x * W, st.y * HORIZON, st.r, st.r);
+    ctx.fillRect((((st.x + starShift) % 1) + 1) % 1 * W, st.y * HORIZON, st.r, st.r);
   }
   ctx.globalAlpha = 1;
 
-  // synthwave sun sinking into the grid
+  // synthwave sun sinking into the grid; it slides across the sky when the
+  // road turns 90 degrees, with a pale moon on the opposite heading
   const sr = Math.min(W, H) * 0.21;
   const sy = HORIZON + sr * 0.32;
+  const sunX = CX - wrapAngle(S.heading) / (Math.PI / 2) * W * 1.15;
+  const moonX = CX - wrapAngle(S.heading - Math.PI) / (Math.PI / 2) * W * 1.15;
   ctx.save();
   ctx.beginPath(); ctx.rect(0, 0, W, HORIZON); ctx.clip();
-  const sunGlow = ctx.createRadialGradient(CX, sy, sr * 0.4, CX, sy, sr * 2.4);
-  sunGlow.addColorStop(0, "rgba(255,138,60,0.28)");
-  sunGlow.addColorStop(1, "rgba(255,47,214,0)");
-  ctx.fillStyle = sunGlow;
-  ctx.fillRect(CX - sr * 2.4, sy - sr * 2.4, sr * 4.8, sr * 2.4);
-  const sg = ctx.createLinearGradient(0, sy - sr, 0, sy + sr * 0.4);
-  sg.addColorStop(0, "#ffd447");
-  sg.addColorStop(0.55, "#ff8a3c");
-  sg.addColorStop(1, "#ff2fd6");
-  ctx.fillStyle = sg;
-  ctx.beginPath(); ctx.arc(CX, sy, sr, 0, Math.PI * 2); ctx.fill();
-  // retro slices, thicker toward the horizon
-  ctx.fillStyle = "#02040c";
-  for (let i = 0; i < 6; i++){
-    const yy = sy - sr + sr * (0.9 + i * 0.20);
-    ctx.fillRect(CX - sr - 4, yy, sr * 2 + 8, 1.5 + i * 2.2);
+  if (Math.abs(sunX - CX) < W){
+    const sunGlow = ctx.createRadialGradient(sunX, sy, sr * 0.4, sunX, sy, sr * 2.4);
+    sunGlow.addColorStop(0, "rgba(255,138,60,0.28)");
+    sunGlow.addColorStop(1, "rgba(255,47,214,0)");
+    ctx.fillStyle = sunGlow;
+    ctx.fillRect(sunX - sr * 2.4, sy - sr * 2.4, sr * 4.8, sr * 2.4);
+    const sg = ctx.createLinearGradient(0, sy - sr, 0, sy + sr * 0.4);
+    sg.addColorStop(0, "#ffd447");
+    sg.addColorStop(0.55, "#ff8a3c");
+    sg.addColorStop(1, "#ff2fd6");
+    ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.arc(sunX, sy, sr, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#02040c";
+    for (let i = 0; i < 6; i++){
+      const yy = sy - sr + sr * (0.9 + i * 0.20);
+      ctx.fillRect(sunX - sr - 4, yy, sr * 2 + 8, 1.5 + i * 2.2);
+    }
+  }
+  if (Math.abs(moonX - CX) < W){
+    const mr = sr * 0.45, my = HORIZON - sr * 0.55;
+    ctx.fillStyle = "rgba(190,225,255,0.75)";
+    ctx.shadowColor = "rgba(190,225,255,0.9)"; ctx.shadowBlur = 30;
+    ctx.beginPath(); ctx.arc(moonX, my, mr, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "rgba(4,8,18,0.35)";
+    ctx.beginPath(); ctx.arc(moonX - mr * 0.35, my - mr * 0.2, mr * 0.8, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
 
@@ -1164,9 +1291,10 @@ function drawPlayer(){
   ctx.lineWidth = Math.max(2.5, 9 * scale);
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  ctx.strokeStyle = S.suit;
-  ctx.shadowColor = S.suit;
-  ctx.shadowBlur = 12;
+  const suitNow = S.nitro > 0 && Math.floor(S.time * 14) % 2 ? "#ffffff" : S.suit;
+  ctx.strokeStyle = suitNow;
+  ctx.shadowColor = suitNow;
+  ctx.shadowBlur = S.nitro > 0 ? 20 : 12;
 
   const line = pts => {
     ctx.beginPath();
