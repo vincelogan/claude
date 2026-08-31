@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Busca SMILES — pessoal</title>
+<style>
+  :root{
+    --laranja:#ff7020; --laranja-esc:#e35a0d; --ink:#26211c; --sub:#7a7168;
+    --pape:#faf7f4; --card:#ffffff; --linha:#eee5dc; --ok:#1d8a4e; --erro:#c0392b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--pape);color:var(--ink);
+       font:15px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  header{background:linear-gradient(120deg,#ff7020,#ff9d3f);color:#fff;padding:26px 20px 20px}
+  header .wrap{max-width:960px;margin:0 auto}
+  header h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.3px}
+  header p{margin:4px 0 0;opacity:.9;font-size:13px}
+  main{max-width:960px;margin:-14px auto 60px;padding:0 20px}
+  .painel{background:var(--card);border:1px solid var(--linha);border-radius:14px;
+          box-shadow:0 6px 24px rgba(120,80,40,.08);padding:18px}
+  .grid{display:grid;grid-template-columns:1fr 44px 1fr;gap:10px;align-items:end}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px}
+  label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;
+        letter-spacing:.06em;color:var(--sub);margin:0 0 4px 2px}
+  input,select{width:100%;padding:10px 12px;border:1.5px solid var(--linha);border-radius:10px;
+        font:inherit;background:#fff;color:var(--ink)}
+  input:focus,select:focus{outline:none;border-color:var(--laranja)}
+  .campo{position:relative}
+  .badge{margin-top:5px;min-height:18px;font-size:12px;color:var(--sub)}
+  .badge b{color:var(--laranja-esc)}
+  .sugestoes{position:absolute;z-index:30;left:0;right:0;top:calc(100% - 24px);
+             background:#fff;border:1px solid var(--linha);border-radius:10px;
+             box-shadow:0 10px 30px rgba(0,0,0,.12);max-height:280px;overflow:auto;display:none}
+  .sugestoes div{padding:9px 12px;cursor:pointer;font-size:14px;border-bottom:1px solid #f6efe8}
+  .sugestoes div:last-child{border-bottom:none}
+  .sugestoes div.ativo,.sugestoes div:hover{background:#fff3ea}
+  .sugestoes .metro{font-weight:700}
+  .trocar{height:42px;border:1.5px solid var(--linha);background:#fff;border-radius:10px;
+          cursor:pointer;font-size:17px;color:var(--laranja-esc)}
+  .trocar:hover{border-color:var(--laranja)}
+  .acoes{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}
+  .btn{background:var(--laranja);color:#fff;border:none;border-radius:10px;
+       padding:12px 26px;font:inherit;font-weight:800;cursor:pointer}
+  .btn:hover{background:var(--laranja-esc)}
+  .btn[disabled]{opacity:.55;cursor:wait}
+  .btn-sec{background:#fff;color:var(--laranja-esc);border:1.5px solid var(--laranja)}
+  .status{font-size:13px;color:var(--sub)}
+  .status .pt{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+  .pt.on{background:var(--ok)} .pt.off{background:var(--erro)}
+  .aviso{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:14px;display:none}
+  .aviso.erro{display:block;background:#fdecea;color:var(--erro);border:1px solid #f5c6c0}
+  .aviso.info{display:block;background:#fff6ec;color:#8a5a1d;border:1px solid #f3ddc2}
+  #resultados{margin-top:22px}
+  .voo{background:var(--card);border:1px solid var(--linha);border-radius:12px;
+       padding:14px 16px;margin-bottom:10px;display:grid;
+       grid-template-columns:1fr auto;gap:8px 16px;align-items:center}
+  .voo .rota{font-size:17px;font-weight:800}
+  .voo .rota span{color:var(--laranja-esc)}
+  .voo .meta{font-size:13px;color:var(--sub)}
+  .fares{text-align:right}
+  .fare{font-size:14px;margin:2px 0}
+  .fare b{font-size:16px;color:var(--ink)}
+  .fare small{color:var(--sub)}
+  .melhor .fare:first-child b{color:var(--laranja-esc)}
+  .contagem{font-size:13px;color:var(--sub);margin:14px 2px}
+  .rodape{margin-top:26px;font-size:12px;color:var(--sub);text-align:center}
+  @media (max-width:640px){
+    .grid{grid-template-columns:1fr}
+    .trocar{width:44px;justify-self:center;transform:rotate(90deg)}
+    .voo{grid-template-columns:1fr}.fares{text-align:left}
+  }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>✈️ Busca SMILES <small style="font-weight:400;opacity:.85">· pessoal &amp; privada</small></h1>
+  <p>Digite a cidade — os códigos de aeroporto são resolvidos sozinhos (Rio → GIG + SDU).</p>
+</div></header>
+
+<main>
+  <div class="painel">
+    <div class="grid">
+      <div class="campo">
+        <label for="origem">Origem</label>
+        <input id="origem" placeholder="Cidade ou aeroporto (ex.: Rio, GRU…)" autocomplete="off">
+        <div class="badge" id="origem-badge"></div>
+        <div class="sugestoes" id="origem-sug"></div>
+      </div>
+      <button class="trocar" id="trocar" title="Inverter origem e destino">⇄</button>
+      <div class="campo">
+        <label for="destino">Destino</label>
+        <input id="destino" placeholder="Cidade ou aeroporto (ex.: Nova York…)" autocomplete="off">
+        <div class="badge" id="destino-badge"></div>
+        <div class="sugestoes" id="destino-sug"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div><label for="ida">Ida</label><input type="date" id="ida"></div>
+      <div><label for="volta">Volta <small style="text-transform:none">(vazio = só ida)</small></label>
+           <input type="date" id="volta"></div>
+      <div><label for="adultos">Adultos</label>
+        <select id="adultos">
+          <option>1</option><option selected>2</option><option>3</option>
+          <option>4</option><option>5</option><option>6</option>
+        </select></div>
+      <div><label for="criancas">Crianças</label>
+        <select id="criancas"><option selected>0</option><option>1</option><option>2</option><option>3</option></select></div>
+      <div><label for="bebes">Bebês</label>
+        <select id="bebes"><option selected>0</option><option>1</option><option>2</option></select></div>
+      <div><label for="cabine">Cabine</label>
+        <select id="cabine">
+          <option value="ALL" selected>Todas</option>
+          <option value="ECONOMIC">Econômica</option>
+          <option value="PREMIUM_ECONOMIC">Premium Economy</option>
+          <option value="BUSINESS">Executiva</option>
+        </select></div>
+    </div>
+
+    <div class="acoes">
+      <button class="btn" id="buscar">Buscar voos</button>
+      <button class="btn btn-sec" id="capturar" style="display:none">🔑 Capturar chave</button>
+      <span class="status" id="status"><span class="pt off"></span>verificando configuração…</span>
+    </div>
+    <div class="aviso" id="aviso"></div>
+  </div>
+
+  <div id="resultados"></div>
+  <p class="rodape">Ferramenta pessoal — replica a busca do próprio site do SMILES. Use com moderação.</p>
+</main>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const hoje = new Date().toISOString().slice(0,10);
+$("ida").min = hoje; $("volta").min = hoje;
+$("ida").addEventListener("change", () => { if ($("ida").value) $("volta").min = $("ida").value; });
+
+/* ---------- autocomplete ---------- */
+const sel = { origem:null, destino:null };   // {code, label, airports:[..]}
+
+function montaAutocomplete(nome){
+  const inp = $(nome), caixa = $(nome+"-sug"), badge = $(nome+"-badge");
+  let itens = [], ativo = -1, timer = null;
+
+  function fecha(){ caixa.style.display = "none"; ativo = -1; }
+  function escolhe(item){
+    sel[nome] = item;
+    inp.value = item.city + " (" + item.code + ")";
+    badge.innerHTML = "Aeroportos: <b>" + item.airports.join(", ") + "</b>";
+    fecha();
+  }
+  function render(){
+    caixa.innerHTML = "";
+    itens.forEach((it,i)=>{
+      const d = document.createElement("div");
+      d.textContent = it.label;
+      if (it.kind === "metro") d.classList.add("metro");
+      if (i === ativo) d.classList.add("ativo");
+      d.onmousedown = e => { e.preventDefault(); escolhe(it); };
+      caixa.appendChild(d);
+    });
+    caixa.style.display = itens.length ? "block" : "none";
+  }
+  inp.addEventListener("input", ()=>{
+    sel[nome] = null; badge.textContent = "";
+    clearTimeout(timer);
+    const q = inp.value.trim();
+    if (q.length < 2){ fecha(); return; }
+    timer = setTimeout(async ()=>{
+      try{
+        const r = await fetch("/api/airports?q=" + encodeURIComponent(q));
+        itens = await r.json(); ativo = itens.length ? 0 : -1; render();
+      }catch(_){ fecha(); }
+    }, 180);
+  });
+  inp.addEventListener("keydown", e=>{
+    if (caixa.style.display !== "block") return;
+    if (e.key === "ArrowDown"){ ativo = Math.min(ativo+1, itens.length-1); render(); e.preventDefault(); }
+    else if (e.key === "ArrowUp"){ ativo = Math.max(ativo-1, 0); render(); e.preventDefault(); }
+    else if (e.key === "Enter"){ if (ativo >= 0) escolhe(itens[ativo]); e.preventDefault(); }
+    else if (e.key === "Escape"){ fecha(); }
+  });
+  inp.addEventListener("blur", ()=> setTimeout(fecha, 150));
+}
+montaAutocomplete("origem");
+montaAutocomplete("destino");
+
+$("trocar").onclick = ()=>{
+  const o = sel.origem, d = sel.destino;
+  const ov = $("origem").value, dv = $("destino").value;
+  const ob = $("origem-badge").innerHTML, db = $("destino-badge").innerHTML;
+  sel.origem = d; sel.destino = o;
+  $("origem").value = dv; $("destino").value = ov;
+  $("origem-badge").innerHTML = db; $("destino-badge").innerHTML = ob;
+};
+
+/* ---------- status / captura ---------- */
+async function atualizaStatus(){
+  try{
+    const r = await fetch("/api/status"); const s = await r.json();
+    if (s.configured){
+      $("status").innerHTML = '<span class="pt on"></span>chave OK · ' + (s.endpoint||"");
+      $("capturar").style.display = "none";
+    } else {
+      $("status").innerHTML = '<span class="pt off"></span>sem x-api-key — capture antes de buscar';
+      $("capturar").style.display = "inline-block";
+    }
+  }catch(_){
+    $("status").innerHTML = '<span class="pt off"></span>servidor indisponível';
+  }
+}
+$("capturar").onclick = async ()=>{
+  const b = $("capturar");
+  b.disabled = true; b.textContent = "Capturando… (abre o site do SMILES, ~30s)";
+  aviso("");
+  try{
+    const r = await fetch("/api/capture", {method:"POST"});
+    const j = await r.json();
+    if (j.ok) aviso("Chave capturada com sucesso. Pode buscar!", "info");
+    else aviso("Falha na captura: " + j.error, "erro");
+  }catch(e){ aviso("Falha na captura: " + e, "erro"); }
+  b.disabled = false; b.textContent = "🔑 Capturar chave";
+  atualizaStatus();
+};
+function aviso(msg, tipo){
+  const a = $("aviso");
+  a.className = "aviso" + (msg ? " " + (tipo||"erro") : "");
+  a.textContent = msg;
+}
+
+/* ---------- busca ---------- */
+function fmtMilhas(n){ return n == null ? "?" : n.toLocaleString("pt-BR"); }
+function fmtReais(v){ return v ? " + R$ " + v.toLocaleString("pt-BR",{minimumFractionDigits:2}) : ""; }
+
+function renderVoos(voos){
+  const cont = $("resultados"); cont.innerHTML = "";
+  if (!voos.length){
+    cont.innerHTML = '<p class="contagem">Nenhum voo retornado para esses filtros/datas.</p>';
+    return;
+  }
+  const c = document.createElement("p");
+  c.className = "contagem";
+  c.textContent = voos.length + " voos — mais baratos em milhas primeiro";
+  cont.appendChild(c);
+  voos.forEach((v,i)=>{
+    const div = document.createElement("div");
+    div.className = "voo" + (i === 0 ? " melhor" : "");
+    const conex = v.paradas === 0 ? "direto" : v.paradas + " conexão(ões)";
+    const fares = (v.fares||[]).map(f =>
+      '<div class="fare"><b>' + fmtMilhas(f.milhas) + '</b> milhas' +
+      '<small>' + fmtReais(f.dinheiro) + ' · ' + f.tipo +
+      (f.assentos != null ? ' · ' + f.assentos + ' assentos' : '') + '</small></div>'
+    ).join("");
+    div.innerHTML =
+      '<div><div class="rota">' + v.origem + ' <span>→</span> ' + v.destino + '</div>' +
+      '<div class="meta">' + v.partida + ' → ' + v.chegada + ' · ' + v.duracao_str +
+      ' · ' + conex + ' · ' + v.companhia + ' ' + v.numero + ' · ' + v.cabine + '</div></div>' +
+      '<div class="fares">' + (fares || '<div class="fare">sem tarifas</div>') + '</div>';
+    cont.appendChild(div);
+  });
+}
+
+$("buscar").onclick = async ()=>{
+  aviso("");
+  if (!sel.origem || !sel.destino) return aviso("Escolha origem e destino pela lista de sugestões.");
+  if (!$("ida").value) return aviso("Escolha a data de ida.");
+  if (sel.origem.code === sel.destino.code) return aviso("Origem e destino iguais.");
+  const b = $("buscar");
+  b.disabled = true; b.textContent = "Buscando…";
+  $("resultados").innerHTML = "";
+  try{
+    const r = await fetch("/api/search", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        origin: sel.origem.code, dest: sel.destino.code,
+        out: $("ida").value, ret: $("volta").value || null,
+        adults:+$("adultos").value, children:+$("criancas").value,
+        infants:+$("bebes").value, cabin:$("cabine").value
+      })
+    });
+    const j = await r.json();
+    if (j.ok) renderVoos(j.flights);
+    else {
+      aviso(j.error);
+      if (j.needs_capture) $("capturar").style.display = "inline-block";
+    }
+  }catch(e){ aviso("Erro ao buscar: " + e); }
+  b.disabled = false; b.textContent = "Buscar voos";
+};
+
+atualizaStatus();
+</script>
+</body>
+</html>

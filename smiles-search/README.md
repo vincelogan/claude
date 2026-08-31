@@ -142,7 +142,19 @@ Abre o Chromium, faz uma busca de exemplo no próprio site do SMILES, intercepta
 a chamada `airlines/search` e salva host/path/`x-api-key`/params em
 `config.json`. Rode de novo sempre que as buscas começarem a dar 401/403.
 
-### Passo 2 — pesquisar
+### Interface web (recomendado)
+
+```bash
+python server.py
+# abra http://127.0.0.1:8777
+```
+
+Tela com **autocomplete de cidades** (digite "Rio" e ele resolve RIO = GIG+SDU,
+"Nova York" → NYC = JFK+EWR+LGA), **seletor de datas**, passageiros e cabine.
+Se ainda não houver `x-api-key`, a própria tela mostra o botão
+**🔑 Capturar chave**. Roda só em `127.0.0.1` — privado, na sua máquina.
+
+### Passo 2 — pesquisar (via terminal)
 
 ```bash
 # RIO -> NYC, ida 07/05/2027, volta 17/05/2027, 2 adultos
@@ -171,8 +183,12 @@ smiles-search/
 ├── requirements.txt
 ├── config.example.json    # modelo de config (host/path/x-api-key)
 ├── search.py              # CLI: capture | search
+├── server.py              # servidor local da interface web (127.0.0.1:8777)
+├── web/
+│   └── index.html         # frontend: autocomplete de cidades + datas + resultados
 └── smiles/
     ├── __init__.py
+    ├── airports.py        # base de aeroportos + metrópoles (RIO, SAO, NYC…)
     ├── config.py          # carrega/salva config.json
     ├── capture.py         # Playwright: sniff da x-api-key + endpoint
     ├── client.py          # replica a chamada airlines/search
