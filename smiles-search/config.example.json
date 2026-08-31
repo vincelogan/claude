@@ -1,0 +1,12 @@
+{
+  "api_key": "COLE_AQUI_A_X_API_KEY_DO_DEVTOOLS",
+  "search_url": "https://api-air-flightsearch-prd.smiles.com.br/v1/airlines/search",
+  "base_params": {
+    "forceCongener": "false",
+    "r": "BR"
+  },
+  "extra_headers": {
+    "region": "BRAZIL",
+    "channel": "web"
+  }
+}

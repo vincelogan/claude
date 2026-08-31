@@ -1,0 +1,98 @@
+"""Cliente que replica a chamada interna airlines/search do SMILES."""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+
+import requests
+
+from .config import SmilesConfig
+
+BROWSER_UA = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
+
+
+class SmilesError(RuntimeError):
+    pass
+
+
+def date_to_epoch_ms(date_str: str) -> int:
+    """'2027-05-07' -> epoch ms a meia-noite (tratada como referencia do dia).
+
+    O SMILES usa meia-noite de Brasilia (UTC-3). Somamos 3h para bater o dia.
+    """
+    d = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    return int(d.timestamp() * 1000) + 3 * 3600 * 1000
+
+
+class SmilesClient:
+    def __init__(self, cfg: SmilesConfig):
+        if not cfg.is_usable:
+            raise SmilesError(
+                "Config sem x-api-key. Rode 'python search.py capture' primeiro, "
+                "ou preencha config.json (veja config.example.json)."
+            )
+        self.cfg = cfg
+        self.session = requests.Session()
+        self.session.headers.update(
+            {
+                "x-api-key": cfg.api_key,
+                "Accept": "application/json, text/plain, */*",
+                "Origin": "https://www.smiles.com.br",
+                "Referer": "https://www.smiles.com.br/",
+                "User-Agent": BROWSER_UA,
+                **(cfg.extra_headers or {}),
+            }
+        )
+
+    def search(
+        self,
+        origin: str,
+        dest: str,
+        departure_date: str,
+        return_date: str | None = None,
+        adults: int = 1,
+        children: int = 0,
+        infants: int = 0,
+        cabin: str = "ALL",
+        timeout: int = 40,
+    ) -> dict:
+        """Faz a busca e devolve o JSON cru. Levanta SmilesError em falha."""
+        params = dict(self.cfg.base_params or {})
+        params.update(
+            {
+                "originAirportCode": origin.upper(),
+                "destinationAirportCode": dest.upper(),
+                "departureDate": date_to_epoch_ms(departure_date),
+                "adults": adults,
+                "children": children,
+                "infants": infants,
+                "cabinType": cabin.upper(),
+                # Convencao observada na URL do site: 1 = ida e volta, 2 = so ida.
+                "tripType": "1" if return_date else "2",
+            }
+        )
+        if return_date:
+            params["returnDate"] = date_to_epoch_ms(return_date)
+
+        try:
+            resp = self.session.get(self.cfg.search_url, params=params, timeout=timeout)
+        except requests.RequestException as exc:
+            raise SmilesError(f"Falha de rede: {exc}") from exc
+
+        if resp.status_code in (401, 403):
+            raise SmilesError(
+                f"HTTP {resp.status_code}: a x-api-key provavelmente rotacionou/expirou. "
+                "Rode 'python search.py capture' de novo para pegar a chave atual."
+            )
+        if resp.status_code == 429:
+            raise SmilesError("HTTP 429: muitas buscas. Espere um pouco e diminua a frequencia.")
+        if resp.status_code >= 400:
+            raise SmilesError(f"HTTP {resp.status_code}: {resp.text[:300]}")
+
+        try:
+            return resp.json()
+        except ValueError as exc:
+            raise SmilesError(f"Resposta nao-JSON: {resp.text[:300]}") from exc

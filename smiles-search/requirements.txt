@@ -1,0 +1,3 @@
+requests>=2.31
+# Opcional, so para o modo 'capture' (sniff automatico da x-api-key):
+playwright>=1.40

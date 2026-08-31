@@ -1,0 +1,9 @@
+# A config real pode conter a x-api-key da sua sessao — mantenha privada.
+config.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
