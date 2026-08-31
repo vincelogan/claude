@@ -153,6 +153,10 @@ Os **resultados aparecem na própria plataforma**:
 
 - **Autocomplete de cidades** (digite "Rio" e ele resolve RIO = GIG+SDU,
   "Nova York" → NYC = JFK+EWR+LGA), seletor de datas, passageiros e cabine.
+- **Datas flexíveis (±2 dias)**: acima da lista, uma faixa mostra os 2 dias
+  antes e 2 depois da data escolhida (uma faixa para a ida e outra para a
+  volta), com a menor milhagem de cada dia e o mais barato destacado. Clique
+  num dia para trocar a data e rebuscar.
 - **Voos diretos priorizados**: lista em duas seções (Diretos / Com conexões),
   tag `DIRETO`, badge `MENOR PREÇO`, filtro "só diretos" e ordenação por
   milhas, duração ou horário. Link "emitir no SMILES ↗" abre a mesma busca

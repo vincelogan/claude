@@ -156,6 +156,21 @@ input:disabled{opacity:.45}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
 
+/* ---- datas flexiveis (+-2 dias) ---- */
+#flex{margin-bottom:6px}
+.flex-blk{margin-bottom:10px}
+.flex-lbl{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:0 2px 6px}
+.flex-row{display:flex;gap:6px}
+.fday{flex:1;min-width:0;border:1px solid var(--line);background:var(--panel);border-radius:10px;
+  padding:7px 6px;cursor:pointer;text-align:center;transition:border-color .12s}
+.fday:hover{border-color:var(--amber)}
+.fday.sel{border-color:var(--amber);background:var(--amber-soft);box-shadow:inset 0 0 0 1px var(--amber)}
+.fday.off{opacity:.4;cursor:default;pointer-events:none}
+.fday .fd{font-family:var(--mono);font-size:10px;color:var(--sub);text-transform:capitalize}
+.fday .fm{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:1px}
+.fday.cheap .fm{color:var(--amber-ink)}
+.fday .fk{font-size:9px;color:var(--faint);font-family:var(--mono);min-height:11px}
+
 /* ---- calendario ---- */
 .cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .cal-nav{display:flex;align-items:center;gap:8px}
@@ -287,6 +302,7 @@ input:disabled{opacity:.45}
           </select>
         </div>
       </div>
+      <div id="flex"></div>
       <div id="list"></div>
     </div>
 
@@ -482,11 +498,11 @@ async function doSearch(){
   if(valid())return;
   showErr("");show("list");
   $("go-l").innerHTML='<span class="spin"></span>Buscando…';$("go").disabled=true;
-  $("list").innerHTML='<div class="vazio"><span class="spin"></span>Consultando o SMILES…</div>';$("sum").innerHTML="";
+  $("list").innerHTML='<div class="vazio"><span class="spin"></span>Consultando o SMILES…</div>';$("sum").innerHTML="";$("flex").innerHTML="";
   try{
     const j=await api("/api/search",payload());
     if(!j.ok){$("list").innerHTML="";showErr(j.error,j.needs_capture);}
-    else{flights=j.flights;summary=j.summary;smilesUrl=j.smiles_url;lastDemo=j.demo;lastCached=j.cached;renderList();}
+    else{flights=j.flights;summary=j.summary;smilesUrl=j.smiles_url;lastDemo=j.demo;lastCached=j.cached;renderList();buildFlex();}
   }catch(e){$("list").innerHTML="";showErr("Erro: "+e);}
   $("go-l").textContent="Buscar voos";update();
 }
@@ -564,10 +580,72 @@ function monthDays(){
   for(let d=1;d<=n;d++)days.push(new Date(y,m,d,12));
   return days;
 }
-function legKey(dstr){ // chave inclui o sentido do trecho
+function keyOD(o,d,ds){ // chave de cache por trecho/dia/pax/cabine
+  return o+">"+d+">"+ds+">"+$("cabine").value+">"+$("adultos").value+"-"+$("criancas").value+"-"+$("bebes").value;
+}
+function legKey(dstr){
   const o=calLeg==="out"?sel.origem.code:sel.destino.code;
   const d=calLeg==="out"?sel.destino.code:sel.origem.code;
-  return o+">"+d+">"+dstr+">"+$("cabine").value+">"+$("adultos").value+"-"+$("criancas").value+"-"+$("bebes").value;
+  return keyOD(o,d,dstr);
+}
+async function getDay(o,d,ds){
+  const k=keyOD(o,d,ds);
+  if(dayData[k])return dayData[k];
+  const j=await api("/api/day",{origin:o,dest:d,out:ds,
+    adults:+$("adultos").value,children:+$("criancas").value,infants:+$("bebes").value,cabin:$("cabine").value});
+  if(!j.ok)throw Object.assign(new Error(j.error||"erro"),{needsCap:j.needs_capture});
+  dayData[k]={cheapest:j.cheapest,cheapest_direct:j.cheapest_direct};
+  return dayData[k];
+}
+const addDays=(ds,n)=>{const d=new Date(ds+"T12:00:00");d.setDate(d.getDate()+n);return iso(d);};
+
+/* faixa de datas flexiveis: -2..+2 dias em torno da data escolhida (por trecho) */
+function buildFlex(){
+  const box=$("flex");box.innerHTML="";
+  if(!sel.origem||!sel.destino||!$("ida").value)return;
+  const today=iso(hoje);
+  const legs=[{lbl:"Ida · "+sel.origem.code+" → "+sel.destino.code,o:sel.origem.code,d:sel.destino.code,
+               cur:$("ida").value,kind:"ida"}];
+  if(tripType===1&&$("volta").value)
+    legs.push({lbl:"Volta · "+sel.destino.code+" → "+sel.origem.code,o:sel.destino.code,d:sel.origem.code,
+               cur:$("volta").value,kind:"volta"});
+  legs.forEach(leg=>{
+    const blk=document.createElement("div");blk.className="flex-blk";
+    blk.innerHTML='<div class="flex-lbl">'+leg.lbl+' &nbsp;·&nbsp; ±2 dias</div>';
+    const row=document.createElement("div");row.className="flex-row";
+    const cells=[];
+    for(let off=-2;off<=2;off++){
+      const ds=addDays(leg.cur,off),past=ds<today;
+      const c=document.createElement("div");
+      c.className="fday"+(ds===leg.cur?" sel":"")+(past?" off":"");
+      const [,m,dd]=ds.split("-"),dow=DOWS[new Date(ds+"T12:00:00").getDay()];
+      c.innerHTML='<div class="fd">'+dow+' '+dd+'/'+m+'</div><div class="fm">'+(past?"—":"·")+'</div><div class="fk"></div>';
+      if(!past&&ds!==leg.cur)
+        c.onclick=()=>{
+          if(leg.kind==="ida"){ $("ida").value=ds; if($("volta").value&&$("volta").value<ds)$("volta").value=ds; }
+          else $("volta").value=ds;
+          persist();update();if(!valid())doSearch();
+        };
+      row.appendChild(c);cells.push({ds,c,past});
+    }
+    blk.appendChild(row);box.appendChild(blk);
+    (async()=>{
+      const got=[];
+      for(const cell of cells){
+        if(cell.past)continue;
+        try{const r=await getDay(leg.o,leg.d,cell.ds);got.push({cell,mi:r.cheapest,dir:r.cheapest_direct});}
+        catch(e){cell.c.querySelector(".fm").textContent="—";if(e.needsCap)showErr(e.message,true);}
+      }
+      const vals=got.filter(g=>g.mi!=null).map(g=>g.mi);
+      const lo=vals.length?Math.min.apply(null,vals):null;
+      got.forEach(g=>{
+        g.cell.c.querySelector(".fm").textContent=g.mi!=null?fmtK(g.mi):"—";
+        g.cell.c.querySelector(".fk").textContent=g.dir!=null?"✈":"";
+        if(lo!=null&&g.mi===lo)g.cell.c.classList.add("cheap");
+        g.cell.c.title=fmtBR(g.cell.ds)+(g.mi!=null?(" · menor "+fmtMi(g.mi)+" mi"):" · sem voos");
+      });
+    })();
+  });
 }
 function drawGrid(){
   const g=$("cal-grid");g.innerHTML="";
