@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import threading
+import time
 from datetime import datetime, timezone
 
 import requests
@@ -12,6 +14,21 @@ BROWSER_UA = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 )
+
+# Intervalo minimo entre chamadas reais ao SMILES (a varredura do calendario
+# faz uma busca por dia — isto garante um ritmo respeitoso mesmo assim).
+MIN_INTERVAL = 1.5
+_throttle_lock = threading.Lock()
+_last_call = 0.0
+
+
+def _throttle() -> None:
+    global _last_call
+    with _throttle_lock:
+        wait = MIN_INTERVAL - (time.monotonic() - _last_call)
+        if wait > 0:
+            time.sleep(wait)
+        _last_call = time.monotonic()
 
 
 class SmilesError(RuntimeError):
@@ -77,6 +94,7 @@ class SmilesClient:
         if return_date:
             params["returnDate"] = date_to_epoch_ms(return_date)
 
+        _throttle()
         try:
             resp = self.session.get(self.cfg.search_url, params=params, timeout=timeout)
         except requests.RequestException as exc:

@@ -142,15 +142,32 @@ Abre o Chromium, faz uma busca de exemplo no próprio site do SMILES, intercepta
 a chamada `airlines/search` e salva host/path/`x-api-key`/params em
 `config.json`. Rode de novo sempre que as buscas começarem a dar 401/403.
 
-### Interface web (recomendado)
+### Interface web — a plataforma (recomendado)
 
 ```bash
 python server.py
 # abra http://127.0.0.1:8777
 ```
 
-Tela com **autocomplete de cidades** (digite "Rio" e ele resolve RIO = GIG+SDU,
-"Nova York" → NYC = JFK+EWR+LGA), **seletor de datas**, passageiros e cabine.
+Os **resultados aparecem na própria plataforma**:
+
+- **Autocomplete de cidades** (digite "Rio" e ele resolve RIO = GIG+SDU,
+  "Nova York" → NYC = JFK+EWR+LGA), seletor de datas, passageiros e cabine.
+- **Voos diretos priorizados**: lista em duas seções (Diretos / Com conexões),
+  tag `DIRETO`, badge `MENOR PREÇO`, filtro "só diretos" e ordenação por
+  milhas, duração ou horário. Link "emitir no SMILES ↗" abre a mesma busca
+  no site da Gol para concluir a emissão.
+- **Calendário de milhas**: uma varredura dia a dia do mês (só ida, por trecho
+  Ida/Volta) pinta cada dia numa escala âmbar (claro = barato, forte = caro),
+  marca `★` o menor do mês e `✈` os dias com voo direto. Clicar num dia
+  carrega os voos dele. Barra de progresso e botão parar.
+- **Cache local (SQLite, 6h)**: cada (rota, dia, pax, cabine) só vai à rede
+  uma vez; navegar de novo pelo mês é instantâneo. Entre chamadas reais há um
+  **ritmo mínimo de 1,5s** — respeitoso com o servidor da Gol.
+- **Modo demo**: `SMILES_DEMO=1 python server.py` (ou `api_key: "demo"` no
+  config) gera voos sintéticos estáveis para conhecer a plataforma sem rede
+  e sem chave.
+
 Se ainda não houver `x-api-key`, a própria tela mostra o botão
 **🔑 Capturar chave**. Roda só em `127.0.0.1` — privado, na sua máquina.
 
@@ -183,15 +200,18 @@ smiles-search/
 ├── requirements.txt
 ├── config.example.json    # modelo de config (host/path/x-api-key)
 ├── search.py              # CLI: capture | search
-├── server.py              # servidor local da interface web (127.0.0.1:8777)
+├── server.py              # servidor local: busca, calendário, cache, demo
 ├── web/
-│   └── index.html         # frontend: autocomplete de cidades + datas + resultados
+│   ├── index.html         # a plataforma: lista + calendário de milhas
+│   └── standalone.html    # versão sem servidor (abre a busca no site do SMILES)
 └── smiles/
     ├── __init__.py
     ├── airports.py        # base de aeroportos + metrópoles (RIO, SAO, NYC…)
     ├── config.py          # carrega/salva config.json
     ├── capture.py         # Playwright: sniff da x-api-key + endpoint
-    ├── client.py          # replica a chamada airlines/search
+    ├── client.py          # replica a chamada airlines/search (com throttle)
+    ├── cache.py           # cache SQLite das buscas (TTL 6h)
+    ├── demo.py            # voos sintéticos estáveis (modo demo)
     └── parser.py          # normaliza a resposta em voos legíveis
 ```
 

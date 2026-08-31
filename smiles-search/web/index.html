@@ -3,294 +3,656 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Busca SMILES — pessoal</title>
+<title>Radar SMILES</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-  :root{
-    --laranja:#ff7020; --laranja-esc:#e35a0d; --ink:#26211c; --sub:#7a7168;
-    --pape:#faf7f4; --card:#ffffff; --linha:#eee5dc; --ok:#1d8a4e; --erro:#c0392b;
+:root{
+  --ground:#faf7f1; --panel:#ffffff; --panel-2:#f4efe6;
+  --ink:#221f2e; --sub:#6c6577; --faint:#a49ba8;
+  --line:#e7dfd2; --line-2:#ded4c4;
+  --amber:#e07d18; --amber-soft:#fbe9d1; --amber-ink:#8a4c07;
+  --shadow:0 10px 34px rgba(60,40,15,.10);
+  --cal0:#fdf6e9; --cal1:#f9e6c4; --cal2:#f3d29b; --cal3:#ecba6e; --cal4:#e19d3f;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --disp:"Archivo",var(--sans);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#131228; --panel:#1d1b36; --panel-2:#242142;
+    --ink:#f0ecf7; --sub:#a7a0c0; --faint:#6f688c;
+    --line:#302c50; --line-2:#3b3660;
+    --amber:#f4a835; --amber-soft:#332a1c; --amber-ink:#f6bd5c;
+    --shadow:0 16px 44px rgba(0,0,0,.5);
+    --cal0:#292347; --cal1:#3b3248; --cal2:#4f4142; --cal3:#675138; --cal4:#886023;
   }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--pape);color:var(--ink);
-       font:15px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-  header{background:linear-gradient(120deg,#ff7020,#ff9d3f);color:#fff;padding:26px 20px 20px}
-  header .wrap{max-width:960px;margin:0 auto}
-  header h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.3px}
-  header p{margin:4px 0 0;opacity:.9;font-size:13px}
-  main{max-width:960px;margin:-14px auto 60px;padding:0 20px}
-  .painel{background:var(--card);border:1px solid var(--linha);border-radius:14px;
-          box-shadow:0 6px 24px rgba(120,80,40,.08);padding:18px}
-  .grid{display:grid;grid-template-columns:1fr 44px 1fr;gap:10px;align-items:end}
-  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px}
-  label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;
-        letter-spacing:.06em;color:var(--sub);margin:0 0 4px 2px}
-  input,select{width:100%;padding:10px 12px;border:1.5px solid var(--linha);border-radius:10px;
-        font:inherit;background:#fff;color:var(--ink)}
-  input:focus,select:focus{outline:none;border-color:var(--laranja)}
-  .campo{position:relative}
-  .badge{margin-top:5px;min-height:18px;font-size:12px;color:var(--sub)}
-  .badge b{color:var(--laranja-esc)}
-  .sugestoes{position:absolute;z-index:30;left:0;right:0;top:calc(100% - 24px);
-             background:#fff;border:1px solid var(--linha);border-radius:10px;
-             box-shadow:0 10px 30px rgba(0,0,0,.12);max-height:280px;overflow:auto;display:none}
-  .sugestoes div{padding:9px 12px;cursor:pointer;font-size:14px;border-bottom:1px solid #f6efe8}
-  .sugestoes div:last-child{border-bottom:none}
-  .sugestoes div.ativo,.sugestoes div:hover{background:#fff3ea}
-  .sugestoes .metro{font-weight:700}
-  .trocar{height:42px;border:1.5px solid var(--linha);background:#fff;border-radius:10px;
-          cursor:pointer;font-size:17px;color:var(--laranja-esc)}
-  .trocar:hover{border-color:var(--laranja)}
-  .acoes{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}
-  .btn{background:var(--laranja);color:#fff;border:none;border-radius:10px;
-       padding:12px 26px;font:inherit;font-weight:800;cursor:pointer}
-  .btn:hover{background:var(--laranja-esc)}
-  .btn[disabled]{opacity:.55;cursor:wait}
-  .btn-sec{background:#fff;color:var(--laranja-esc);border:1.5px solid var(--laranja)}
-  .status{font-size:13px;color:var(--sub)}
-  .status .pt{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
-  .pt.on{background:var(--ok)} .pt.off{background:var(--erro)}
-  .aviso{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:14px;display:none}
-  .aviso.erro{display:block;background:#fdecea;color:var(--erro);border:1px solid #f5c6c0}
-  .aviso.info{display:block;background:#fff6ec;color:#8a5a1d;border:1px solid #f3ddc2}
-  #resultados{margin-top:22px}
-  .voo{background:var(--card);border:1px solid var(--linha);border-radius:12px;
-       padding:14px 16px;margin-bottom:10px;display:grid;
-       grid-template-columns:1fr auto;gap:8px 16px;align-items:center}
-  .voo .rota{font-size:17px;font-weight:800}
-  .voo .rota span{color:var(--laranja-esc)}
-  .voo .meta{font-size:13px;color:var(--sub)}
-  .fares{text-align:right}
-  .fare{font-size:14px;margin:2px 0}
-  .fare b{font-size:16px;color:var(--ink)}
-  .fare small{color:var(--sub)}
-  .melhor .fare:first-child b{color:var(--laranja-esc)}
-  .contagem{font-size:13px;color:var(--sub);margin:14px 2px}
-  .rodape{margin-top:26px;font-size:12px;color:var(--sub);text-align:center}
-  @media (max-width:640px){
-    .grid{grid-template-columns:1fr}
-    .trocar{width:44px;justify-self:center;transform:rotate(90deg)}
-    .voo{grid-template-columns:1fr}.fares{text-align:left}
-  }
+}
+:root[data-theme="dark"]{
+  --ground:#131228; --panel:#1d1b36; --panel-2:#242142;
+  --ink:#f0ecf7; --sub:#a7a0c0; --faint:#6f688c;
+  --line:#302c50; --line-2:#3b3660;
+  --amber:#f4a835; --amber-soft:#332a1c; --amber-ink:#f6bd5c;
+  --shadow:0 16px 44px rgba(0,0,0,.5);
+  --cal0:#292347; --cal1:#3b3248; --cal2:#4f4142; --cal3:#675138; --cal4:#886023;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;padding:24px 18px 70px}
+
+/* ---- topo ---- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:11px}
+.mark{width:38px;height:38px;border-radius:11px;background:var(--amber);
+  display:grid;place-items:center;flex:none;box-shadow:0 4px 14px rgba(224,125,24,.35)}
+.mark svg{width:22px;height:22px;display:block}
+.brand h1{font-family:var(--disp);font-size:19px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.05}
+.brand span{display:block;font-size:11.5px;color:var(--sub);font-weight:500}
+.top-r{display:flex;align-items:center;gap:9px}
+.chip{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.08em;
+  padding:4px 10px;border-radius:99px;border:1px solid var(--line-2);color:var(--sub);white-space:nowrap}
+.chip.demo{background:var(--amber-soft);color:var(--amber-ink);border-color:transparent}
+.chip .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.dot.on{background:#2e9e5b}.dot.off{background:#c0392b}
+.theme{border:1px solid var(--line);background:var(--panel);color:var(--sub);
+  width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:15px;display:grid;place-items:center}
+.theme:hover{border-color:var(--amber);color:var(--amber)}
+
+/* ---- painel ---- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--shadow);padding:18px 18px 20px}
+.route{display:grid;grid-template-columns:1fr 44px 1fr;gap:12px;align-items:start}
+.field{position:relative;min-width:0}
+label{display:block;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--sub);margin:0 0 5px 3px}
+input,select{width:100%;font-family:var(--sans);font-size:15px;color:var(--ink);
+  background:var(--panel-2);border:1.5px solid transparent;border-radius:10px;padding:10px 12px}
+input::placeholder{color:var(--faint)}
+input:focus,select:focus{outline:none;border-color:var(--amber);background:var(--panel)}
+select{-webkit-appearance:none;appearance:none;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--sub) 50%),linear-gradient(135deg,var(--sub) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 18px,calc(100% - 11px) 18px;background-size:5px 5px;background-repeat:no-repeat}
+input[type=date]{font-family:var(--mono);font-size:13.5px}
+input:disabled{opacity:.45}
+.code-chip{position:absolute;right:10px;top:31px;font-family:var(--mono);font-size:12px;font-weight:600;
+  color:var(--amber-ink);background:var(--amber-soft);padding:2px 8px;border-radius:6px;pointer-events:none;opacity:0}
+.field.has-sel .code-chip{opacity:1}
+.field.has-sel input{padding-right:62px}
+.airports{font-family:var(--mono);font-size:11px;color:var(--sub);margin:5px 0 0 3px;min-height:15px}
+.airports b{color:var(--amber-ink);font-weight:600}
+.swap{align-self:center;margin-top:13px;width:42px;height:42px;border-radius:11px;
+  border:1.5px solid var(--line-2);background:var(--panel);color:var(--amber-ink);cursor:pointer;display:grid;place-items:center}
+.swap:hover{border-color:var(--amber)}
+.swap svg{width:18px;height:18px}
+.menu{position:absolute;z-index:40;left:0;right:0;top:calc(100% + 6px);background:var(--panel);
+  border:1px solid var(--line-2);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;display:none}
+.menu.open{display:block}
+.opt-row{display:flex;align-items:baseline;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--line)}
+.opt-row:last-child{border-bottom:none}
+.opt-row.on,.opt-row:hover{background:var(--panel-2)}
+.opt-row .oc{font-family:var(--mono);font-weight:600;font-size:12px;color:var(--amber-ink);
+  background:var(--amber-soft);padding:2px 7px;border-radius:6px;flex:none;min-width:40px;text-align:center}
+.opt-row.metro .oc{background:var(--amber);color:#fff}
+.opt-row .ocity{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opt-row .oname{font-size:11px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.trip{display:inline-flex;background:var(--panel-2);border-radius:10px;padding:3px;margin:16px 0 2px;gap:2px}
+.trip button{border:none;background:transparent;font-family:var(--mono);font-size:10.5px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--sub);padding:7px 14px;border-radius:8px;cursor:pointer}
+.trip button.sel{background:var(--panel);color:var(--amber-ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.opts{display:grid;grid-template-columns:1.1fr 1.1fr .8fr .8fr .8fr 1.1fr;gap:11px;margin-top:12px}
+.cta{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.go,.go2{border:none;border-radius:12px;font-family:var(--disp);font-weight:700;font-size:15px;
+  padding:13px 22px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.go{flex:1;min-width:180px;justify-content:center;background:var(--amber);color:#fff;box-shadow:0 6px 18px rgba(224,125,24,.3)}
+.go:hover{filter:brightness(1.05)}
+.go2{background:var(--panel);color:var(--amber-ink);border:1.5px solid var(--amber)}
+.go2:hover{background:var(--amber-soft)}
+.go:disabled,.go2:disabled{opacity:.5;cursor:not-allowed}
+.hint{font-size:12.5px;color:var(--faint);margin:9px 3px 0;min-height:16px}
+.hint.warn{color:var(--amber-ink)}
+.cap{display:none;margin-top:10px}
+.cap button{border:1.5px solid var(--amber);background:var(--amber-soft);color:var(--amber-ink);
+  border-radius:10px;font-family:var(--mono);font-size:12px;font-weight:600;padding:9px 16px;cursor:pointer}
+
+/* ---- resultados ---- */
+#stage{margin-top:22px}
+.stage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.sum{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sum .s{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--sub);
+  background:var(--panel);border:1px solid var(--line);padding:5px 11px;border-radius:99px}
+.sum .s b{color:var(--ink)}
+.sum .s.hot{background:var(--amber-soft);border-color:transparent;color:var(--amber-ink)}
+.sum .s.hot b{color:var(--amber-ink)}
+.sum a{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--amber-ink);text-decoration:none;
+  border:1px solid var(--amber);padding:5px 11px;border-radius:99px}
+.sum a:hover{background:var(--amber-soft)}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.controls label{display:inline-flex;align-items:center;gap:6px;margin:0;font-size:11px;cursor:pointer}
+.controls input[type=checkbox]{width:15px;height:15px;accent-color:var(--amber);cursor:pointer}
+.controls select{width:auto;font-size:12.5px;padding:7px 30px 7px 10px}
+
+.sec{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);margin:16px 3px 8px}
+.voo{background:var(--panel);border:1px solid var(--line);border-radius:13px;
+  padding:13px 15px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:6px 16px;align-items:center}
+.voo.direto-card{border-left:3px solid var(--amber)}
+.voo .rt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.voo .rota{font-family:var(--disp);font-size:16.5px;font-weight:800}
+.voo .rota span{color:var(--amber)}
+.tag{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.1em;padding:2px 8px;border-radius:6px}
+.tag.direto{background:var(--amber-soft);color:var(--amber-ink)}
+.tag.best{background:var(--amber);color:#fff}
+.voo .meta{font-family:var(--mono);font-size:12px;color:var(--sub)}
+.fares{text-align:right}
+.fare{font-size:13.5px;margin:2px 0;font-variant-numeric:tabular-nums}
+.fare b{font-family:var(--mono);font-size:15px;color:var(--ink)}
+.fare small{color:var(--sub)}
+.vazio{color:var(--sub);font-size:14px;padding:26px 4px;text-align:center}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--amber-soft);
+  border-top-color:var(--amber);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:7px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+
+/* ---- calendario ---- */
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.cal-nav{display:flex;align-items:center;gap:8px}
+.cal-nav button{border:1px solid var(--line-2);background:var(--panel);color:var(--ink);
+  width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:15px}
+.cal-nav button:hover{border-color:var(--amber)}
+.cal-nav .mes{font-family:var(--disp);font-size:16px;font-weight:800;min-width:150px;text-align:center;text-transform:capitalize}
+.leg{display:inline-flex;background:var(--panel-2);border-radius:9px;padding:2px;gap:2px}
+.leg button{border:none;background:transparent;font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.08em;color:var(--sub);padding:6px 12px;border-radius:7px;cursor:pointer}
+.leg button.sel{background:var(--panel);color:var(--amber-ink)}
+.prog{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11.5px;color:var(--sub)}
+.bar{width:120px;height:5px;background:var(--panel-2);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--amber);transition:width .2s}
+.stop{border:1px solid var(--line-2);background:var(--panel);color:var(--sub);border-radius:8px;
+  font-family:var(--mono);font-size:10.5px;padding:5px 10px;cursor:pointer}
+.grid-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.dow{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--faint);
+  text-align:center;padding:4px 0;text-transform:uppercase}
+.cell{position:relative;border-radius:10px;background:var(--panel);border:1px solid var(--line);
+  min-height:62px;padding:5px 7px;display:flex;flex-direction:column;justify-content:space-between}
+.cell.off{opacity:.35}
+.cell.lv0{background:var(--cal0);border-color:transparent}
+.cell.lv1{background:var(--cal1);border-color:transparent}
+.cell.lv2{background:var(--cal2);border-color:transparent}
+.cell.lv3{background:var(--cal3);border-color:transparent}
+.cell.lv4{background:var(--cal4);border-color:transparent}
+.cell.clk{cursor:pointer}
+.cell.clk:hover{outline:2px solid var(--amber);outline-offset:-1px}
+.cell.best{outline:2.5px solid var(--amber);outline-offset:-1px}
+.cell .dn{font-family:var(--mono);font-size:10px;color:var(--sub)}
+.cell .mi{font-family:var(--mono);font-size:13.5px;font-weight:600;color:var(--ink);
+  text-align:center;font-variant-numeric:tabular-nums}
+.cell .mk{font-size:9.5px;text-align:center;color:var(--sub);font-family:var(--mono);min-height:12px}
+.cell .ld{position:absolute;inset:0;display:grid;place-items:center}
+.legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px;
+  font-family:var(--mono);font-size:11px;color:var(--sub)}
+.scale{display:inline-flex;border-radius:6px;overflow:hidden}
+.scale i{width:22px;height:11px;display:block}
+.err{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:13.5px;display:none;
+  background:var(--amber-soft);color:var(--amber-ink);border:1px solid var(--line-2)}
+.err.show{display:block}
+.foot{margin-top:30px;font-size:12px;color:var(--faint);text-align:center}
+.hidden{display:none!important}
+@media (max-width:640px){
+  .route{grid-template-columns:1fr}
+  .swap{justify-self:center;transform:rotate(90deg)}
+  .opts{grid-template-columns:1fr 1fr}
+  .voo{grid-template-columns:1fr}.fares{text-align:left}
+  .cell{min-height:54px}.cell .mi{font-size:11.5px}
+}
 </style>
 </head>
 <body>
-<header><div class="wrap">
-  <h1>✈️ Busca SMILES <small style="font-weight:400;opacity:.85">· pessoal &amp; privada</small></h1>
-  <p>Digite a cidade — os códigos de aeroporto são resolvidos sozinhos (Rio → GIG + SDU).</p>
-</div></header>
-
-<main>
-  <div class="painel">
-    <div class="grid">
-      <div class="campo">
-        <label for="origem">Origem</label>
-        <input id="origem" placeholder="Cidade ou aeroporto (ex.: Rio, GRU…)" autocomplete="off">
-        <div class="badge" id="origem-badge"></div>
-        <div class="sugestoes" id="origem-sug"></div>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M2 15.5l20-7.5-3.2 9.5-6.3-2.1L9 20l-1.1-4.9L2 15.5z" fill="#fff"/></svg>
       </div>
-      <button class="trocar" id="trocar" title="Inverter origem e destino">⇄</button>
-      <div class="campo">
+      <div><h1>Radar SMILES</h1><span>voos em milhas · pessoal &amp; privado</span></div>
+    </div>
+    <div class="top-r">
+      <span class="chip" id="status"><span class="dot off"></span>verificando…</span>
+      <button class="theme" id="theme" title="Alternar tema" aria-label="Alternar tema">◐</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="route">
+      <div class="field" id="f-origem">
+        <label for="origem">Origem</label>
+        <input id="origem" placeholder="Rio, GRU, Salvador…" autocomplete="off">
+        <span class="code-chip" id="c-origem"></span>
+        <div class="menu" id="m-origem"></div>
+        <div class="airports" id="a-origem"></div>
+      </div>
+      <button class="swap" id="swap" title="Inverter" aria-label="Inverter origem e destino">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4L3 8l4 4"/><path d="M3 8h13a4 4 0 0 1 0 8h-1"/><path d="M17 20l4-4-4-4"/><path d="M21 16H8"/></svg>
+      </button>
+      <div class="field" id="f-destino">
         <label for="destino">Destino</label>
-        <input id="destino" placeholder="Cidade ou aeroporto (ex.: Nova York…)" autocomplete="off">
-        <div class="badge" id="destino-badge"></div>
-        <div class="sugestoes" id="destino-sug"></div>
+        <input id="destino" placeholder="Nova York, Lisboa…" autocomplete="off">
+        <span class="code-chip" id="c-destino"></span>
+        <div class="menu" id="m-destino"></div>
+        <div class="airports" id="a-destino"></div>
       </div>
     </div>
 
-    <div class="grid2">
+    <div class="trip">
+      <button id="t-round" class="sel">Ida e volta</button>
+      <button id="t-one">Só ida</button>
+    </div>
+
+    <div class="opts">
       <div><label for="ida">Ida</label><input type="date" id="ida"></div>
-      <div><label for="volta">Volta <small style="text-transform:none">(vazio = só ida)</small></label>
-           <input type="date" id="volta"></div>
+      <div><label for="volta">Volta</label><input type="date" id="volta"></div>
       <div><label for="adultos">Adultos</label>
-        <select id="adultos">
-          <option>1</option><option selected>2</option><option>3</option>
-          <option>4</option><option>5</option><option>6</option>
-        </select></div>
+        <select id="adultos"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>
       <div><label for="criancas">Crianças</label>
-        <select id="criancas"><option selected>0</option><option>1</option><option>2</option><option>3</option></select></div>
+        <select id="criancas"><option selected>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
       <div><label for="bebes">Bebês</label>
         <select id="bebes"><option selected>0</option><option>1</option><option>2</option></select></div>
       <div><label for="cabine">Cabine</label>
-        <select id="cabine">
-          <option value="ALL" selected>Todas</option>
-          <option value="ECONOMIC">Econômica</option>
-          <option value="PREMIUM_ECONOMIC">Premium Economy</option>
-          <option value="BUSINESS">Executiva</option>
-        </select></div>
+        <select id="cabine"><option value="ALL" selected>Todas</option><option value="ECONOMIC">Econômica</option><option value="PREMIUM_ECONOMIC">Premium</option><option value="BUSINESS">Executiva</option></select></div>
     </div>
 
-    <div class="acoes">
-      <button class="btn" id="buscar">Buscar voos</button>
-      <button class="btn btn-sec" id="capturar" style="display:none">🔑 Capturar chave</button>
-      <span class="status" id="status"><span class="pt off"></span>verificando configuração…</span>
+    <div class="cta">
+      <button class="go" id="go"><span id="go-l">Buscar voos</span></button>
+      <button class="go2" id="go-cal">Calendário de milhas</button>
     </div>
-    <div class="aviso" id="aviso"></div>
+    <p class="hint" id="hint">Preencha origem, destino e data de ida.</p>
+    <div class="cap" id="cap"><button id="cap-btn">🔑 Capturar chave do SMILES (~30s)</button></div>
+    <div class="err" id="err"></div>
   </div>
 
-  <div id="resultados"></div>
-  <p class="rodape">Ferramenta pessoal — replica a busca do próprio site do SMILES. Use com moderação.</p>
-</main>
+  <div id="stage">
+    <!-- LISTA -->
+    <div id="view-list" class="hidden">
+      <div class="stage-head">
+        <div class="sum" id="sum"></div>
+        <div class="controls">
+          <label><input type="checkbox" id="f-direto"> Só diretos</label>
+          <select id="f-sort">
+            <option value="smart" selected>Diretos primeiro</option>
+            <option value="miles">Menor milhagem</option>
+            <option value="duration">Menor duração</option>
+            <option value="departure">Partida</option>
+          </select>
+        </div>
+      </div>
+      <div id="list"></div>
+    </div>
+
+    <!-- CALENDARIO -->
+    <div id="view-cal" class="hidden">
+      <div class="cal-head">
+        <div class="cal-nav">
+          <button id="cal-prev" aria-label="Mês anterior">‹</button>
+          <span class="mes" id="cal-mes"></span>
+          <button id="cal-next" aria-label="Próximo mês">›</button>
+        </div>
+        <div class="leg">
+          <button id="leg-out" class="sel">Ida</button>
+          <button id="leg-ret">Volta</button>
+        </div>
+        <div class="prog">
+          <span id="prog-t"></span>
+          <span class="bar"><i id="prog-b"></i></span>
+          <button class="stop hidden" id="cal-stop">parar</button>
+        </div>
+      </div>
+      <div class="grid-cal" id="cal-grid"></div>
+      <div class="legend">
+        <span>milhas/dia (só ida):</span>
+        <span class="scale"><i style="background:var(--cal0)"></i><i style="background:var(--cal1)"></i><i style="background:var(--cal2)"></i><i style="background:var(--cal3)"></i><i style="background:var(--cal4)"></i></span>
+        <span>barato → caro</span>
+        <span>✈ tem direto</span>
+        <span>★ menor do mês</span>
+        <span>clique num dia para ver os voos</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">Ferramenta pessoal — consulta a mesma API do site do SMILES, com cache local e ritmo respeitoso. Use com moderação.</p>
+</div>
 
 <script>
 "use strict";
-const $ = id => document.getElementById(id);
-const hoje = new Date().toISOString().slice(0,10);
-$("ida").min = hoje; $("volta").min = hoje;
-$("ida").addEventListener("change", () => { if ($("ida").value) $("volta").min = $("ida").value; });
+const $=id=>document.getElementById(id);
+const sel={origem:null,destino:null};
+let tripType=1, flights=[], summary=null, smilesUrl=null, lastDemo=false, lastCached=false;
+let calMonth=null, calLeg="out", dayData={}, sweepAbort=false, sweeping=false;
+
+/* ---------- util ---------- */
+const fmtMi=n=>n==null?"—":n.toLocaleString("pt-BR");
+const fmtK=n=>n==null?"":(n>=100000?Math.round(n/1000)+"k":(n/1000).toFixed(1).replace(".",",")+"k");
+const fmtR=v=>v?(" + R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:2})):"";
+const iso=d=>d.toISOString().slice(0,10);
+const fmtBR=s=>{if(!s)return"—";const[y,m,d]=s.split("-");return d+"/"+m+"/"+y;};
+async function api(path,body){
+  const r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{});
+  return r.json();
+}
+function showErr(msg,needsCap){
+  const e=$("err"); e.textContent=msg||""; e.classList.toggle("show",!!msg);
+  if(needsCap) $("cap").style.display="block";
+}
 
 /* ---------- autocomplete ---------- */
-const sel = { origem:null, destino:null };   // {code, label, airports:[..]}
-
-function montaAutocomplete(nome){
-  const inp = $(nome), caixa = $(nome+"-sug"), badge = $(nome+"-badge");
-  let itens = [], ativo = -1, timer = null;
-
-  function fecha(){ caixa.style.display = "none"; ativo = -1; }
-  function escolhe(item){
-    sel[nome] = item;
-    inp.value = item.city + " (" + item.code + ")";
-    badge.innerHTML = "Aeroportos: <b>" + item.airports.join(", ") + "</b>";
-    fecha();
+function bind(name){
+  const inp=$(name),menu=$("m-"+name),field=$("f-"+name),chip=$("c-"+name),aps=$("a-"+name);
+  let items=[],active=-1,timer=null;
+  const close=()=>{menu.classList.remove("open");active=-1;};
+  function choose(it){
+    sel[name]=it; inp.value=it.city||it.label;
+    chip.textContent=it.code; field.classList.add("has-sel");
+    aps.innerHTML="Aeroportos: <b>"+it.airports.join(", ")+"</b>";
+    close(); update(); persist();
   }
-  function render(){
-    caixa.innerHTML = "";
-    itens.forEach((it,i)=>{
-      const d = document.createElement("div");
-      d.textContent = it.label;
-      if (it.kind === "metro") d.classList.add("metro");
-      if (i === ativo) d.classList.add("ativo");
-      d.onmousedown = e => { e.preventDefault(); escolhe(it); };
-      caixa.appendChild(d);
+  function draw(){
+    menu.innerHTML="";
+    items.forEach((it,i)=>{
+      const d=document.createElement("div");
+      d.className="opt-row"+(it.kind==="metro"?" metro":"")+(i===active?" on":"");
+      d.innerHTML='<span class="oc">'+it.code+'</span><span><div class="ocity">'+(it.city||it.label)+
+        '</div><div class="oname">'+(it.kind==="metro"?("todos ("+it.airports.join(", ")+")"):it.label)+'</div></span>';
+      d.onmousedown=e=>{e.preventDefault();choose(it);};
+      menu.appendChild(d);
     });
-    caixa.style.display = itens.length ? "block" : "none";
+    menu.classList.toggle("open",items.length>0);
   }
-  inp.addEventListener("input", ()=>{
-    sel[nome] = null; badge.textContent = "";
+  inp.addEventListener("input",()=>{
+    sel[name]=null;chip.textContent="";field.classList.remove("has-sel");aps.textContent="";
     clearTimeout(timer);
-    const q = inp.value.trim();
-    if (q.length < 2){ fecha(); return; }
-    timer = setTimeout(async ()=>{
-      try{
-        const r = await fetch("/api/airports?q=" + encodeURIComponent(q));
-        itens = await r.json(); ativo = itens.length ? 0 : -1; render();
-      }catch(_){ fecha(); }
-    }, 180);
+    const q=inp.value.trim();
+    if(q.length<2){close();update();return;}
+    timer=setTimeout(async()=>{
+      try{items=await (await fetch("/api/airports?q="+encodeURIComponent(q))).json();
+          active=items.length?0:-1;draw();}catch(_){close();}
+    },160);
+    update();
   });
-  inp.addEventListener("keydown", e=>{
-    if (caixa.style.display !== "block") return;
-    if (e.key === "ArrowDown"){ ativo = Math.min(ativo+1, itens.length-1); render(); e.preventDefault(); }
-    else if (e.key === "ArrowUp"){ ativo = Math.max(ativo-1, 0); render(); e.preventDefault(); }
-    else if (e.key === "Enter"){ if (ativo >= 0) escolhe(itens[ativo]); e.preventDefault(); }
-    else if (e.key === "Escape"){ fecha(); }
+  inp.addEventListener("keydown",e=>{
+    if(!menu.classList.contains("open"))return;
+    if(e.key==="ArrowDown"){active=Math.min(active+1,items.length-1);draw();e.preventDefault();}
+    else if(e.key==="ArrowUp"){active=Math.max(active-1,0);draw();e.preventDefault();}
+    else if(e.key==="Enter"){if(active>=0){choose(items[active]);e.preventDefault();}}
+    else if(e.key==="Escape")close();
   });
-  inp.addEventListener("blur", ()=> setTimeout(fecha, 150));
+  inp.addEventListener("blur",()=>setTimeout(close,150));
 }
-montaAutocomplete("origem");
-montaAutocomplete("destino");
+bind("origem");bind("destino");
 
-$("trocar").onclick = ()=>{
-  const o = sel.origem, d = sel.destino;
-  const ov = $("origem").value, dv = $("destino").value;
-  const ob = $("origem-badge").innerHTML, db = $("destino-badge").innerHTML;
-  sel.origem = d; sel.destino = o;
-  $("origem").value = dv; $("destino").value = ov;
-  $("origem-badge").innerHTML = db; $("destino-badge").innerHTML = ob;
+$("swap").onclick=()=>{
+  const o=sel.origem;sel.origem=sel.destino;sel.destino=o;
+  const set=(n,it)=>{$(n).value=it?(it.city||it.label):"";$("c-"+n).textContent=it?it.code:"";
+    $("f-"+n).classList.toggle("has-sel",!!it);
+    $("a-"+n).innerHTML=it?("Aeroportos: <b>"+it.airports.join(", ")+"</b>"):"";};
+  set("origem",sel.origem);set("destino",sel.destino);
+  dayData={}; update(); persist();
+  if(!$("view-cal").classList.contains("hidden")) startSweep();
 };
 
-/* ---------- status / captura ---------- */
-async function atualizaStatus(){
+/* ---------- datas / trip ---------- */
+const hoje=new Date();hoje.setHours(12,0,0,0);
+$("ida").min=iso(hoje);$("volta").min=iso(hoje);
+$("ida").addEventListener("change",()=>{if($("ida").value)$("volta").min=$("ida").value;
+  if($("volta").value&&$("volta").value<$("ida").value)$("volta").value=$("ida").value;update();persist();});
+$("volta").addEventListener("change",()=>{update();persist();});
+["adultos","criancas","bebes","cabine"].forEach(id=>$(id).addEventListener("change",()=>{dayData={};update();persist();}));
+function setTrip(t){
+  tripType=t;
+  $("t-round").classList.toggle("sel",t===1);$("t-one").classList.toggle("sel",t===2);
+  $("volta").disabled=(t===2);update();persist();
+}
+$("t-round").onclick=()=>setTrip(1);$("t-one").onclick=()=>setTrip(2);
+
+function valid(){
+  if(!sel.origem||!sel.destino)return"Escolha origem e destino na lista.";
+  if(sel.origem.code===sel.destino.code)return"Origem e destino são iguais.";
+  if(!$("ida").value)return"Escolha a data de ida.";
+  if(tripType===1&&!$("volta").value)return"Escolha a volta (ou mude para “Só ida”).";
+  return null;
+}
+function update(){
+  const err=valid(),ok=!err;
+  $("go").disabled=!ok;$("go-cal").disabled=!(sel.origem&&sel.destino&&sel.origem.code!==sel.destino.code);
+  const h=$("hint");h.className="hint"+(ok?"":" warn");
+  h.textContent=ok?"Pronto — resultados aparecem aqui na sua plataforma.":err;
+}
+
+/* ---------- persistencia ---------- */
+function persist(){
+  try{localStorage.setItem("radar",JSON.stringify({
+    o:sel.origem,d:sel.destino,ida:$("ida").value,volta:$("volta").value,trip:tripType,
+    a:$("adultos").value,c:$("criancas").value,b:$("bebes").value,cab:$("cabine").value}));}catch(_){}
+}
+(function restore(){
+  let s=null;try{s=JSON.parse(localStorage.getItem("radar")||"null");}catch(_){}
+  if(!s)return;
+  const set=(n,it)=>{if(!it)return;sel[n]=it;$(n).value=it.city||it.label;$("c-"+n).textContent=it.code;
+    $("f-"+n).classList.add("has-sel");$("a-"+n).innerHTML="Aeroportos: <b>"+it.airports.join(", ")+"</b>";};
+  set("origem",s.o);set("destino",s.d);
+  if(s.ida&&s.ida>=iso(hoje))$("ida").value=s.ida;
+  if(s.volta&&s.volta>=iso(hoje))$("volta").value=s.volta;
+  ["adultos","criancas","bebes","cabine"].forEach((id,i)=>{const v=[s.a,s.c,s.b,s.cab][i];if(v)$(id).value=v;});
+  if(s.trip)setTrip(s.trip);
+})();
+
+/* ---------- status/captura ---------- */
+async function refreshStatus(){
   try{
-    const r = await fetch("/api/status"); const s = await r.json();
-    if (s.configured){
-      $("status").innerHTML = '<span class="pt on"></span>chave OK · ' + (s.endpoint||"");
-      $("capturar").style.display = "none";
-    } else {
-      $("status").innerHTML = '<span class="pt off"></span>sem x-api-key — capture antes de buscar';
-      $("capturar").style.display = "inline-block";
-    }
-  }catch(_){
-    $("status").innerHTML = '<span class="pt off"></span>servidor indisponível';
+    const s=await api("/api/status");
+    const el=$("status");
+    if(s.demo){el.className="chip demo";el.textContent="MODO DEMO";}
+    else if(s.configured){el.className="chip";el.innerHTML='<span class="dot on"></span>chave OK';$("cap").style.display="none";}
+    else{el.className="chip";el.innerHTML='<span class="dot off"></span>sem chave';$("cap").style.display="block";}
+  }catch(_){$("status").innerHTML='<span class="dot off"></span>servidor?';}
+}
+$("cap-btn").onclick=async()=>{
+  const b=$("cap-btn");b.disabled=true;b.textContent="Capturando… (~30s)";showErr("");
+  try{const j=await api("/api/capture",{});
+    if(!j.ok)showErr("Falha na captura: "+j.error);}catch(e){showErr("Falha: "+e);}
+  b.disabled=false;b.textContent="🔑 Capturar chave do SMILES (~30s)";refreshStatus();
+};
+
+/* ---------- payload comum ---------- */
+function payload(extra){
+  return Object.assign({
+    origin:sel.origem.code,dest:sel.destino.code,
+    out:$("ida").value,ret:(tripType===1?$("volta").value:null),
+    adults:+$("adultos").value,children:+$("criancas").value,
+    infants:+$("bebes").value,cabin:$("cabine").value},extra||{});
+}
+
+/* ---------- LISTA ---------- */
+function show(view){
+  $("view-list").classList.toggle("hidden",view!=="list");
+  $("view-cal").classList.toggle("hidden",view!=="cal");
+}
+$("go").onclick=()=>doSearch();
+async function doSearch(){
+  if(valid())return;
+  showErr("");show("list");
+  $("go-l").innerHTML='<span class="spin"></span>Buscando…';$("go").disabled=true;
+  $("list").innerHTML='<div class="vazio"><span class="spin"></span>Consultando o SMILES…</div>';$("sum").innerHTML="";
+  try{
+    const j=await api("/api/search",payload());
+    if(!j.ok){$("list").innerHTML="";showErr(j.error,j.needs_capture);}
+    else{flights=j.flights;summary=j.summary;smilesUrl=j.smiles_url;lastDemo=j.demo;lastCached=j.cached;renderList();}
+  }catch(e){$("list").innerHTML="";showErr("Erro: "+e);}
+  $("go-l").textContent="Buscar voos";update();
+}
+$("f-direto").addEventListener("change",renderList);
+$("f-sort").addEventListener("change",renderList);
+
+function fareHTML(f){
+  return '<div class="fare"><b>'+fmtMi(f.milhas)+'</b> <small>milhas'+fmtR(f.dinheiro)+' · '+f.tipo+
+    (f.assentos!=null?(' · '+f.assentos+' assentos'):'')+'</small></div>';
+}
+function card(v,isBest){
+  const d=document.createElement("div");
+  d.className="voo"+(v.direto?" direto-card":"");
+  d.innerHTML='<div><div class="rt"><span class="rota">'+v.origem+' <span>→</span> '+v.destino+'</span>'+
+    (v.direto?'<span class="tag direto">DIRETO</span>':'')+
+    (isBest?'<span class="tag best">MENOR PREÇO</span>':'')+'</div>'+
+    '<div class="meta">'+v.partida+' → '+v.chegada+' · '+v.duracao_str+' · '+
+    (v.direto?'direto':v.paradas+' conexão(ões)')+' · '+v.companhia+' '+v.numero+'</div></div>'+
+    '<div class="fares">'+(v.fares||[]).map(fareHTML).join("")+'</div>';
+  return d;
+}
+function renderList(){
+  const list=$("list");list.innerHTML="";
+  let fs=flights.slice();
+  if($("f-direto").checked)fs=fs.filter(v=>v.direto);
+  const mode=$("f-sort").value;
+  const mi=v=>v.melhor==null?1e15:v.melhor;
+  if(mode==="miles")fs.sort((a,b)=>mi(a)-mi(b));
+  else if(mode==="duration")fs.sort((a,b)=>(a.duracao_min??1e9)-(b.duracao_min??1e9));
+  else if(mode==="departure")fs.sort((a,b)=>a.partida.localeCompare(b.partida));
+  else fs.sort((a,b)=>(a.direto?0:1)-(b.direto?0:1)||mi(a)-mi(b));
+
+  const s=summary||{};
+  $("sum").innerHTML=
+    '<span class="s hot">menor: <b>'+fmtMi(s.cheapest)+'</b> mi</span>'+
+    (s.cheapest_direct!=null?'<span class="s">direto: <b>'+fmtMi(s.cheapest_direct)+'</b> mi</span>':'')+
+    '<span class="s">'+(s.total||0)+' voos · '+(s.directs||0)+' diretos</span>'+
+    (lastCached?'<span class="s">cache</span>':'')+(lastDemo?'<span class="s hot">demo</span>':'')+
+    (smilesUrl?'<a href="'+smilesUrl+'" target="_blank" rel="noopener">emitir no SMILES ↗</a>':'');
+
+  if(!fs.length){list.innerHTML='<div class="vazio">Nenhum voo para esses filtros/datas.</div>';return;}
+  const best=Math.min.apply(null,fs.map(mi));
+  if(mode==="smart"&&fs.some(v=>v.direto)&&fs.some(v=>!v.direto)){
+    const dir=fs.filter(v=>v.direto),con=fs.filter(v=>!v.direto);
+    const h1=document.createElement("div");h1.className="sec";h1.textContent="Voos diretos ("+dir.length+")";list.appendChild(h1);
+    dir.forEach(v=>list.appendChild(card(v,mi(v)===best)));
+    const h2=document.createElement("div");h2.className="sec";h2.textContent="Com conexões ("+con.length+")";list.appendChild(h2);
+    con.forEach(v=>list.appendChild(card(v,mi(v)===best)));
+  }else{
+    fs.forEach(v=>list.appendChild(card(v,mi(v)===best)));
   }
 }
-$("capturar").onclick = async ()=>{
-  const b = $("capturar");
-  b.disabled = true; b.textContent = "Capturando… (abre o site do SMILES, ~30s)";
-  aviso("");
-  try{
-    const r = await fetch("/api/capture", {method:"POST"});
-    const j = await r.json();
-    if (j.ok) aviso("Chave capturada com sucesso. Pode buscar!", "info");
-    else aviso("Falha na captura: " + j.error, "erro");
-  }catch(e){ aviso("Falha na captura: " + e, "erro"); }
-  b.disabled = false; b.textContent = "🔑 Capturar chave";
-  atualizaStatus();
+
+/* ---------- CALENDARIO ---------- */
+const MESES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const DOWS=["dom","seg","ter","qua","qui","sex","sáb"];
+$("go-cal").onclick=()=>{
+  if(!sel.origem||!sel.destino)return;
+  const base=$("ida").value?new Date($("ida").value+"T12:00:00"):hoje;
+  calMonth=new Date(base.getFullYear(),base.getMonth(),1);
+  show("cal");startSweep();
 };
-function aviso(msg, tipo){
-  const a = $("aviso");
-  a.className = "aviso" + (msg ? " " + (tipo||"erro") : "");
-  a.textContent = msg;
+$("cal-prev").onclick=()=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);startSweep();};
+$("cal-next").onclick=()=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);startSweep();};
+$("leg-out").onclick=()=>{setLeg("out");};
+$("leg-ret").onclick=()=>{setLeg("ret");};
+function setLeg(l){calLeg=l;$("leg-out").classList.toggle("sel",l==="out");
+  $("leg-ret").classList.toggle("sel",l==="ret");startSweep();}
+$("cal-stop").onclick=()=>{sweepAbort=true;};
+
+function monthDays(){
+  const y=calMonth.getFullYear(),m=calMonth.getMonth();
+  const n=new Date(y,m+1,0).getDate();
+  const days=[];
+  for(let d=1;d<=n;d++)days.push(new Date(y,m,d,12));
+  return days;
 }
-
-/* ---------- busca ---------- */
-function fmtMilhas(n){ return n == null ? "?" : n.toLocaleString("pt-BR"); }
-function fmtReais(v){ return v ? " + R$ " + v.toLocaleString("pt-BR",{minimumFractionDigits:2}) : ""; }
-
-function renderVoos(voos){
-  const cont = $("resultados"); cont.innerHTML = "";
-  if (!voos.length){
-    cont.innerHTML = '<p class="contagem">Nenhum voo retornado para esses filtros/datas.</p>';
-    return;
-  }
-  const c = document.createElement("p");
-  c.className = "contagem";
-  c.textContent = voos.length + " voos — mais baratos em milhas primeiro";
-  cont.appendChild(c);
-  voos.forEach((v,i)=>{
-    const div = document.createElement("div");
-    div.className = "voo" + (i === 0 ? " melhor" : "");
-    const conex = v.paradas === 0 ? "direto" : v.paradas + " conexão(ões)";
-    const fares = (v.fares||[]).map(f =>
-      '<div class="fare"><b>' + fmtMilhas(f.milhas) + '</b> milhas' +
-      '<small>' + fmtReais(f.dinheiro) + ' · ' + f.tipo +
-      (f.assentos != null ? ' · ' + f.assentos + ' assentos' : '') + '</small></div>'
-    ).join("");
-    div.innerHTML =
-      '<div><div class="rota">' + v.origem + ' <span>→</span> ' + v.destino + '</div>' +
-      '<div class="meta">' + v.partida + ' → ' + v.chegada + ' · ' + v.duracao_str +
-      ' · ' + conex + ' · ' + v.companhia + ' ' + v.numero + ' · ' + v.cabine + '</div></div>' +
-      '<div class="fares">' + (fares || '<div class="fare">sem tarifas</div>') + '</div>';
-    cont.appendChild(div);
-  });
+function legKey(dstr){ // chave inclui o sentido do trecho
+  const o=calLeg==="out"?sel.origem.code:sel.destino.code;
+  const d=calLeg==="out"?sel.destino.code:sel.origem.code;
+  return o+">"+d+">"+dstr+">"+$("cabine").value+">"+$("adultos").value+"-"+$("criancas").value+"-"+$("bebes").value;
 }
-
-$("buscar").onclick = async ()=>{
-  aviso("");
-  if (!sel.origem || !sel.destino) return aviso("Escolha origem e destino pela lista de sugestões.");
-  if (!$("ida").value) return aviso("Escolha a data de ida.");
-  if (sel.origem.code === sel.destino.code) return aviso("Origem e destino iguais.");
-  const b = $("buscar");
-  b.disabled = true; b.textContent = "Buscando…";
-  $("resultados").innerHTML = "";
-  try{
-    const r = await fetch("/api/search", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        origin: sel.origem.code, dest: sel.destino.code,
-        out: $("ida").value, ret: $("volta").value || null,
-        adults:+$("adultos").value, children:+$("criancas").value,
-        infants:+$("bebes").value, cabin:$("cabine").value
-      })
-    });
-    const j = await r.json();
-    if (j.ok) renderVoos(j.flights);
-    else {
-      aviso(j.error);
-      if (j.needs_capture) $("capturar").style.display = "inline-block";
+function drawGrid(){
+  const g=$("cal-grid");g.innerHTML="";
+  DOWS.forEach(w=>{const e=document.createElement("div");e.className="dow";e.textContent=w;g.appendChild(e);});
+  const days=monthDays();
+  for(let i=0;i<days[0].getDay();i++){const e=document.createElement("div");g.appendChild(e);}
+  const today=iso(hoje);
+  // faixa de cores pela distribuicao dos dias carregados
+  const vals=days.map(d=>dayData[legKey(iso(d))]).filter(x=>x&&x.cheapest!=null).map(x=>x.cheapest);
+  const lo=vals.length?Math.min.apply(null,vals):0, hi=vals.length?Math.max.apply(null,vals):1;
+  days.forEach(d=>{
+    const ds=iso(d),data=dayData[legKey(ds)];
+    const cell=document.createElement("div");
+    const past=ds<today;
+    cell.className="cell"+(past?" off":"");
+    let mid='<div class="mi"></div>',mk='<div class="mk"></div>';
+    if(data&&data.cheapest!=null){
+      let lv=0;
+      if(hi>lo)lv=Math.min(4,Math.floor((data.cheapest-lo)/(hi-lo)*5));
+      cell.classList.add("lv"+lv,"clk");
+      if(vals.length&&data.cheapest===lo){cell.classList.add("best");}
+      mid='<div class="mi">'+fmtK(data.cheapest)+(data.cheapest===lo?" ★":"")+'</div>';
+      mk='<div class="mk">'+(data.cheapest_direct!=null?"✈ direto":"")+'</div>';
+      cell.title=fmtBR(ds)+" · menor: "+fmtMi(data.cheapest)+" milhas"+
+        (data.cheapest_direct!=null?(" · direto: "+fmtMi(data.cheapest_direct)):" · sem diretos");
+      cell.onclick=()=>{ if(calLeg==="out")$("ida").value=ds; else $("volta").value=ds;
+        persist();update(); if(!valid())doSearch(); };
+    }else if(data&&data.cheapest==null){
+      mid='<div class="mi" style="color:var(--faint)">—</div>';
+      cell.title=fmtBR(ds)+" · nada disponível";
+    }else if(!past&&sweeping){
+      mid='<div class="mi" style="color:var(--faint)">·</div>';
     }
-  }catch(e){ aviso("Erro ao buscar: " + e); }
-  b.disabled = false; b.textContent = "Buscar voos";
-};
+    cell.innerHTML='<div class="dn">'+d.getDate()+'</div>'+mid+mk;
+    g.appendChild(cell);
+  });
+  $("cal-mes").textContent=MESES[calMonth.getMonth()]+" "+calMonth.getFullYear();
+}
+async function startSweep(){
+  if(!sel.origem||!sel.destino)return;
+  sweepAbort=true;                       // encerra varredura anterior
+  await new Promise(r=>setTimeout(r,30));
+  sweepAbort=false;sweeping=true;
+  const days=monthDays().filter(d=>iso(d)>=iso(hoje));
+  const todo=days.filter(d=>!dayData[legKey(iso(d))]);
+  let done=0;const total=todo.length;
+  $("cal-stop").classList.toggle("hidden",total===0);
+  drawGrid();
+  const o=calLeg==="out"?sel.origem.code:sel.destino.code;
+  const dd=calLeg==="out"?sel.destino.code:sel.origem.code;
+  for(const d of todo){
+    if(sweepAbort)break;
+    const ds=iso(d);
+    $("prog-t").textContent=(done+1)+"/"+total+" dias";
+    $("prog-b").style.width=Math.round(done/Math.max(1,total)*100)+"%";
+    try{
+      const j=await api("/api/day",{origin:o,dest:dd,out:ds,
+        adults:+$("adultos").value,children:+$("criancas").value,
+        infants:+$("bebes").value,cabin:$("cabine").value});
+      if(j.ok)dayData[legKey(ds)]={cheapest:j.cheapest,cheapest_direct:j.cheapest_direct};
+      else{showErr(j.error,j.needs_capture);break;}
+    }catch(e){showErr("Erro na varredura: "+e);break;}
+    done++;drawGrid();
+  }
+  sweeping=false;
+  $("prog-b").style.width="100%";
+  $("prog-t").textContent=total? (sweepAbort?"pausado":"concluído") : "em cache";
+  $("cal-stop").classList.add("hidden");
+  drawGrid();
+}
 
-atualizaStatus();
+/* ---------- tema ---------- */
+(function(){
+  let t=null;try{t=localStorage.getItem("radar-theme");}catch(_){}
+  if(t)document.documentElement.setAttribute("data-theme",t);
+  $("theme").onclick=()=>{
+    const cur=document.documentElement.getAttribute("data-theme");
+    const dark=matchMedia("(prefers-color-scheme:dark)").matches;
+    const next=cur?(cur==="dark"?"light":"dark"):(dark?"light":"dark");
+    document.documentElement.setAttribute("data-theme",next);
+    try{localStorage.setItem("radar-theme",next);}catch(_){}
+  };
+})();
+
+update();refreshStatus();
 </script>
 </body>
 </html>
