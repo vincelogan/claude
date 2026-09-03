@@ -521,6 +521,18 @@ async function refreshStatus(){
         (s.key_error?('<br><br><b style="display:inline">Motivo:</b> '+s.key_error)
                     :' (modo demo ligado de propósito.)');
       $("cap").style.display="block";
+    }else if(s.antibot){
+      // O SMILES recusa o IP deste servidor. Dizer "chave ok" aqui seria
+      // enganoso: a plataforma nao vai conseguir buscar nada.
+      el.className="chip demo";el.textContent="SEM BUSCA AQUI";
+      bn.classList.add("show");
+      bn.innerHTML='<b>Esta versão hospedada não busca no SMILES</b>'+
+        'A proteção anti-bot do site recusa o IP deste servidor'+
+        (s.antibot_ip?(' ('+s.antibot_ip+')'):'')+'. Não é chave nem header — '+
+        'o mesmo código com os headers completos do Chrome leva 406 daqui. '+
+        'Rode a versão local (<code>python server.py</code>): lá existe o modo '+
+        'navegador, que faz a busca dentro do Chromium, na própria página do SMILES.';
+      $("cap").style.display="none";
     }else if(s.configured){
       el.className="chip";
       const auto=(s.key_source||"").indexOf("auto")===0;

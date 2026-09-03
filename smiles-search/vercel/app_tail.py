@@ -66,6 +66,41 @@ class SmilesError(RuntimeError):
     pass
 
 
+# ---- memoria do bloqueio anti-bot ----------------------------------------
+# O SMILES recusa (406) as requisicoes vindas do IP deste servidor. Sem
+# lembrar disso, a varredura do calendario dispararia 30 requisicoes que ja
+# sabemos que serao recusadas — lento para o usuario e insistente com o
+# servidor da Gol sem nenhuma chance de dar certo.
+ANTIBOT_TTL = 1800          # meia hora ate testar de novo (o IP pode mudar)
+_ANTIBOT = {"ts": 0.0, "ip": None}
+
+
+def _antibot_ativo() -> bool:
+    return bool(_ANTIBOT["ts"]) and (time.time() - _ANTIBOT["ts"]) < ANTIBOT_TTL
+
+
+def _erro_antibot() -> SmilesError:
+    ip = _ANTIBOT["ip"]
+    return SmilesError(
+        "Esta versao hospedada nao consegue buscar no SMILES: a protecao "
+        "anti-bot do site recusa o IP deste servidor"
+        + (f" ({ip})" if ip else "")
+        + ". Nao e chave nem header — o mesmo codigo com os headers completos "
+        "do Chrome leva 406 daqui. Nao ha conserto do lado do servidor sem "
+        "disfarcar a requisicao, o que este projeto nao faz. Rode a versao "
+        "local (python server.py): la existe o modo navegador, que faz a "
+        "busca dentro do Chromium, na propria pagina do SMILES."
+    )
+
+
+def _marcar_antibot(corpo: str) -> None:
+    ip = None
+    m = re.search(r'"clientIP"\s*:\s*"([^"]+)"', corpo or "")
+    if m:
+        ip = m.group(1)
+    _ANTIBOT.update({"ts": time.time(), "ip": ip})
+
+
 def date_to_epoch_ms(date_str: str) -> int:
     d = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
     # Meio-dia de Brasilia (15h UTC): e o que a URL real do SMILES usa e da
@@ -75,6 +110,11 @@ def date_to_epoch_ms(date_str: str) -> int:
 
 def live_search(origin, dest, departure_date, return_date, adults, children,
                 infants, cabin, _retry=True):
+    # Antes de qualquer coisa: se o IP ja foi recusado, nem a descoberta da
+    # chave vale a pena — ela tambem bate no smiles.com.br e tambem seria
+    # recusada. Falhar aqui poupa duas idas a rede por busca.
+    if _antibot_ativo():
+        raise _erro_antibot()
     info = _chave()
     if not info["key"]:
         raise SmilesError(info["error"] or "Nao foi possivel obter a x-api-key.")
@@ -103,16 +143,10 @@ def live_search(origin, dest, departure_date, return_date, adults, children,
         raise SmilesError(f"HTTP {r.status_code}: a x-api-key foi recusada e a "
                           "redescoberta automatica nao resolveu.")
     if r.status_code == 406:
-        # O corpo do Akamai traz referenceId e clientIP. O clientIP e o IP do
-        # servidor do Vercel: se a mesma busca funciona na sua maquina e falha
-        # aqui, o que o SMILES esta recusando e este IP de datacenter.
-        raise SmilesError(
-            "HTTP 406: a protecao anti-bot (Akamai) do SMILES recusou a "
-            "requisicao antes de chegar na API. Resposta dela: "
-            + r.text[:200].replace("\n", " ")
-            + " | Rode a mesma busca na versao local (sua conexao): se la "
-              "funcionar, o bloqueio e do IP deste servidor e o caminho e "
-              "usar a versao local.")
+        # O corpo do Akamai traz o clientIP — o IP deste servidor, que e o que
+        # esta sendo recusado. Guardamos para nao repetir a requisicao inutil.
+        _marcar_antibot(r.text)
+        raise _erro_antibot()
     if r.status_code == 429:
         raise SmilesError("HTTP 429: muitas buscas. Aguarde um pouco.")
     if r.status_code >= 400:
@@ -269,6 +303,9 @@ def handler(_p):
                         "locked": bool(ACCESS_CODE),
                         "key_source": info.get("source"),
                         "key_error": info.get("error"),
+                        "hospedado": True,
+                        "antibot": _antibot_ativo(),
+                        "antibot_ip": _ANTIBOT["ip"],
                         "endpoint": None if demo else (info.get("url") or SEARCH_URL)})
 
     if action == "airports":
