@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 import requests
 
+from .autokey import browser_headers
 from .config import SmilesConfig
 
 BROWSER_UA = (
@@ -57,16 +58,8 @@ class SmilesClient:
             )
         self.cfg = cfg
         self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "x-api-key": cfg.api_key,
-                "Accept": "application/json, text/plain, */*",
-                "Origin": "https://www.smiles.com.br",
-                "Referer": "https://www.smiles.com.br/",
-                "User-Agent": BROWSER_UA,
-                **(cfg.extra_headers or {}),
-            }
-        )
+        self.session.headers.update(browser_headers(**{
+            "x-api-key": cfg.api_key, **(cfg.extra_headers or {})}))
 
     def search(
         self,
@@ -109,6 +102,13 @@ class SmilesClient:
                 f"HTTP {resp.status_code}: a x-api-key provavelmente rotacionou/expirou. "
                 "Rode 'python search.py capture' de novo para pegar a chave atual."
             )
+        if resp.status_code == 406:
+            raise SmilesError(
+                "HTTP 406: a protecao anti-bot (Akamai) do SMILES recusou a "
+                "requisicao. Isso costuma ser header faltando ou o IP do "
+                "servidor. Rode a mesma busca na sua maquina para comparar: "
+                "se funcionar local e falhar no Vercel, e bloqueio de IP de "
+                "datacenter — nesse caso use a versao local.")
         if resp.status_code == 429:
             raise SmilesError("HTTP 429: muitas buscas. Espere um pouco e diminua a frequencia.")
         if resp.status_code >= 400:

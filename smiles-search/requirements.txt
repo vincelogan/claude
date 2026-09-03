@@ -2,3 +2,4 @@ requests>=2.31
 flask>=3.0
 # Opcional, so para o modo 'capture' (sniff automatico da x-api-key):
 playwright>=1.40
+brotli>=1.1

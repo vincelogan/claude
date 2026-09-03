@@ -22,8 +22,50 @@ from urllib.parse import urljoin
 
 import requests
 
-UA = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+# O SMILES fica atras do Akamai, que recusa (HTTP 406) requisicoes cujo
+# conjunto de headers nao parece de navegador. Mandamos o mesmo conjunto que
+# o Chrome manda — e coerente entre si: UA de Windows combina com
+# sec-ch-ua-platform "Windows". UA de Linux + platform Windows denuncia bot.
+UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+
+SEC_CH_UA = '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"'
+
+
+def browser_headers(**extra) -> dict:
+    """Headers de navegador real. Sem isto o Akamai devolve 406."""
+    h = {
+        "User-Agent": UA,
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Origin": "https://www.smiles.com.br",
+        "Referer": "https://www.smiles.com.br/",
+        "sec-ch-ua": SEC_CH_UA,
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "Connection": "keep-alive",
+    }
+    h.update({k: v for k, v in extra.items() if v is not None})
+    return h
+
+
+def page_headers() -> dict:
+    """Headers para buscar PAGINA/JS (navegacao), nao a API."""
+    h = browser_headers()
+    h.update({
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Upgrade-Insecure-Requests": "1",
+    })
+    h.pop("Origin", None)
+    h.pop("Referer", None)
+    return h
 
 PAGINAS = [
     "https://www.smiles.com.br/mfe/emissao-passagem/",
@@ -109,8 +151,7 @@ def _pontuar(texto: str, chave: str) -> int:
 def discover(timeout: int = 20, max_bundles: int = MAX_BUNDLES) -> dict:
     """Acha a x-api-key atual. Levanta DiscoveryError com diagnostico se falhar."""
     sess = requests.Session()
-    sess.headers.update({"User-Agent": UA,
-                         "Accept": "text/html,application/xhtml+xml,*/*"})
+    sess.headers.update(page_headers())
 
     diag = []
     candidatos: dict[str, int] = {}

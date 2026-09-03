@@ -28,9 +28,6 @@ def _modo():
     r = _chave()
     return (r["key"] is None), r
 
-BROWSER_UA = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-              "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-
 # ---- cache em memoria (serverless: vive enquanto a instancia estiver quente) ----
 CACHE_TTL = 6 * 3600
 _CACHE: dict = {}
@@ -91,11 +88,7 @@ def live_search(origin, dest, departure_date, return_date, adults, children,
     }
     if return_date:
         params["returnDate"] = date_to_epoch_ms(return_date)
-    headers = {
-        "x-api-key": chave, "Accept": "application/json, text/plain, */*",
-        "Origin": "https://www.smiles.com.br", "Referer": "https://www.smiles.com.br/",
-        "User-Agent": BROWSER_UA,
-    }
+    headers = browser_headers(**{"x-api-key": chave})
     _throttle()
     try:
         r = requests.get(url, params=params, headers=headers, timeout=25)
@@ -109,6 +102,11 @@ def live_search(origin, dest, departure_date, return_date, adults, children,
                                children, infants, cabin, _retry=False)
         raise SmilesError(f"HTTP {r.status_code}: a x-api-key foi recusada e a "
                           "redescoberta automatica nao resolveu.")
+    if r.status_code == 406:
+        raise SmilesError(
+            "HTTP 406: a protecao anti-bot (Akamai) do SMILES recusou a "
+            "requisicao. Pode ser header faltando ou bloqueio do IP do "
+            "servidor. Rode a versao local para comparar.")
     if r.status_code == 429:
         raise SmilesError("HTTP 429: muitas buscas. Aguarde um pouco.")
     if r.status_code >= 400:
