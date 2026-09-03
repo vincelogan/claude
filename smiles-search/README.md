@@ -190,6 +190,49 @@ Abre o Chromium, faz uma busca de exemplo no próprio site do SMILES, intercepta
 a chamada `airlines/search` e salva host/path/`x-api-key`/params em
 `config.json`. Rode de novo sempre que as buscas começarem a dar 401/403.
 
+### Quando o SMILES responde HTTP 406 (protecao anti-bot)
+
+O site fica atras do Akamai. A requisicao HTTP direta — mesmo com todos os
+headers de Chrome — pode ser recusada com **HTTP 406** antes de chegar na API.
+Isso nao e chave errada (chave errada da 401/403): a protecao olha alem dos
+headers, principalmente reputacao do IP e a impressao digital do handshake
+TLS/HTTP2. **De IP de datacenter (Vercel e afins) o 406 e a regra.**
+
+Este projeto **nao** tenta falsificar esses sinais. A saida e nao ter o que
+falsificar: o **modo navegador** faz a busca dentro de um Chromium de verdade,
+abrindo a mesma pagina publica do SMILES com a mesma busca, e le a resposta que
+o site ja recebeu. Sem login, sem contornar protecao, sem tarifa que o site nao
+mostraria a voce.
+
+```bash
+# na plataforma web: automatico. Ao ver 406 uma vez, as buscas seguintes ja
+# vao pelo navegador. Para forcar desde o inicio:
+SMILES_BROWSER=1 python server.py
+
+# na linha de comando:
+python search.py search --origin RIO --dest NYC --out 2027-05-07 --ret 2027-05-17 --navegador
+
+# para ver a janela do Chromium e entender o que o site mostrou:
+SMILES_BROWSER_HEADED=1 python server.py      # ou --navegador --show na CLI
+```
+
+Variaveis:
+
+| variavel | efeito |
+|---|---|
+| `SMILES_BROWSER=1` | sempre pelo navegador (nem tenta HTTP) |
+| `SMILES_BROWSER=0` | nunca pelo navegador (so HTTP; 406 vira erro) |
+| `SMILES_BROWSER_HEADED=1` | mostra a janela em vez de rodar invisivel |
+| `SMILES_CHROMIUM=/caminho` | usa um Chrome/Chromium que voce ja tem |
+
+Custo: alguns segundos por busca. A instancia do Chromium **fica viva** entre
+as buscas, senao a varredura de um mes no calendario abriria o navegador 30
+vezes; ela se fecha sozinha depois de 10 minutos parada.
+
+**No Vercel isso nao funciona** — la nao ha navegador, e e justamente o IP de
+la que e recusado. O deploy continua util para a interface e o modo demo; para
+milhas reais, rode local.
+
 ### Interface web — a plataforma (recomendado)
 
 ```bash

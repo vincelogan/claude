@@ -4,7 +4,7 @@
 Roda so na sua maquina (127.0.0.1). Serve o frontend (web/index.html) e expoe:
 
   GET  /api/airports?q=rio      -> autocomplete de cidades/aeroportos
-  GET  /api/status              -> config capturada? modo demo?
+  GET  /api/status              -> config capturada? modo demo? http ou navegador?
   POST /api/capture             -> roda a captura da x-api-key (Playwright)
   POST /api/search              -> busca; voos por trecho + resumo fiel
   POST /api/day                 -> resumo leve de um dia (varredura do calendario)
@@ -13,6 +13,11 @@ FIDELIDADE: ida e volta sao trechos separados (nunca misturados), a tarifa
 padrao Smiles nunca e substituida pela do Clube, e o modo demo e sempre
 sinalizado na resposta (`demo: true`) para a interface avisar.
 
+MODO NAVEGADOR: se a protecao anti-bot do SMILES recusar a requisicao HTTP
+(HTTP 406), a busca passa a ser feita dentro de um Chromium de verdade, na
+mesma pagina publica do site. Force com SMILES_BROWSER=1, desligue com
+SMILES_BROWSER=0, e veja a janela com SMILES_BROWSER_HEADED=1.
+
 Uso:  python server.py   e abra http://127.0.0.1:8777
 """
 
@@ -20,17 +25,17 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from urllib.parse import urlencode
 
 from flask import Flask, jsonify, request, send_from_directory
 
 from smiles.airports import resolve, suggest
 from smiles.cache import SearchCache
-from smiles.client import SmilesClient, SmilesError, date_to_epoch_ms
+from smiles.client import SmilesClient, SmilesError
 from smiles.config import SmilesConfig, load_config
-from smiles import autokey
+from smiles import autokey, navegador
 from smiles.demo import demo_search
 from smiles.parser import parse_flights, resumo
+from smiles.urls import mfe_url
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
 
@@ -40,6 +45,39 @@ cache = SearchCache()
 
 def _demo_on(cfg) -> bool:
     return cfg.api_key == "demo" or os.environ.get("SMILES_DEMO") == "1"
+
+
+# ---- modo navegador -------------------------------------------------------
+# A protecao anti-bot do SMILES recusa (406) a requisicao HTTP direta vinda de
+# alguns IPs. Quando isso acontece, a saida e deixar um Chromium de verdade
+# fazer a busca. Ligue de proposito com SMILES_BROWSER=1; sem isso, tentamos
+# HTTP primeiro e so caimos no navegador se o 406 aparecer.
+BROWSER_SEMPRE = os.environ.get("SMILES_BROWSER") == "1"
+BROWSER_NUNCA = os.environ.get("SMILES_BROWSER") == "0"
+BROWSER_HEADLESS = os.environ.get("SMILES_BROWSER_HEADED") != "1"
+
+# Uma vez que o HTTP levou 406, nao adianta insistir a cada busca: cada
+# tentativa custa uma ida a rede e um erro certo. Lembramos pela sessao.
+_http_bloqueado = False
+
+
+def _bloqueado_por_antibot(exc: Exception) -> bool:
+    return "406" in str(exc)
+
+
+def _busca_navegador(p: dict) -> dict:
+    return navegador.search(
+        origin=p["origin"], dest=p["dest"], departure_date=p["out"],
+        return_date=p["ret"], adults=p["adults"], children=p["children"],
+        infants=p["infants"], cabin=p["cabin"], headless=BROWSER_HEADLESS)
+
+
+def _modo_busca() -> str:
+    if BROWSER_SEMPRE:
+        return "navegador"
+    if _http_bloqueado and not BROWSER_NUNCA:
+        return "navegador (HTTP bloqueado)"
+    return "http"
 
 
 def _resolver_chave(force: bool = False) -> dict:
@@ -103,24 +141,45 @@ def _raw_search(p: dict, force: bool = False):
         raw = demo_search(p["origin"], p["dest"], p["out"],
                           cabin=p["cabin"], return_date=p["ret"])
     else:
-        def _buscar(force):
-            cli, _ = _cliente(force=force)
-            return cli.search(
-                origin=p["origin"], dest=p["dest"], departure_date=p["out"],
-                return_date=p["ret"], adults=p["adults"], children=p["children"],
-                infants=p["infants"], cabin=p["cabin"],
-            )
-        try:
-            raw = _buscar(False)
-        except SmilesError as exc:
-            # 401/403 = a Gol rotacionou a chave: descobre de novo e tenta 1 vez
-            if any(t in str(exc) for t in ("401", "403", "rotacionou")):
-                autokey.invalidate()
-                raw = _buscar(True)
-            else:
-                raise
+        raw = _buscar_real(p)
     cache.put(key, raw)
     return raw, False, demo
+
+
+def _buscar_real(p: dict) -> dict:
+    """HTTP direto; se a protecao anti-bot recusar, faz pelo navegador."""
+    global _http_bloqueado
+
+    if BROWSER_SEMPRE or (_http_bloqueado and not BROWSER_NUNCA):
+        return _busca_navegador(p)
+
+    def _http(force):
+        cli, _ = _cliente(force=force)
+        return cli.search(
+            origin=p["origin"], dest=p["dest"], departure_date=p["out"],
+            return_date=p["ret"], adults=p["adults"], children=p["children"],
+            infants=p["infants"], cabin=p["cabin"],
+        )
+
+    try:
+        return _http(False)
+    except SmilesError as exc:
+        # 401/403 = a Gol rotacionou a chave: descobre de novo e tenta 1 vez.
+        if any(t in str(exc) for t in ("401", "403", "rotacionou")):
+            autokey.invalidate()
+            return _http(True)
+        if _bloqueado_por_antibot(exc) and not BROWSER_NUNCA:
+            try:
+                raw = _busca_navegador(p)
+            except navegador.NavegadorError as bexc:
+                raise SmilesError(
+                    f"{exc}\n\nTentei tambem pelo navegador e nao deu: {bexc}"
+                ) from bexc
+            # So marca depois de um sucesso — senao um 406 solitario mandaria
+            # todas as buscas seguintes para o caminho lento sem necessidade.
+            _http_bloqueado = True
+            return raw
+        raise
 
 
 def _voo_json(v, clube: bool) -> dict:
@@ -159,22 +218,8 @@ def _sort(voos, mode: str, clube: bool):
 
 def _smiles_url(p: dict) -> str:
     """Link profundo para a mesma busca no site do SMILES (para emitir)."""
-    o, d = resolve(p["origin"]), resolve(p["dest"])
-    q = {
-        "adults": p["adults"], "children": p["children"], "infants": p["infants"],
-        "cabin": p["cabin"], "departureDate": date_to_epoch_ms(p["out"]),
-        "isElegible": "false", "isFlexibleDateChecked": "false",
-        "searchType": "g3", "segments": "1",
-        "tripType": "1" if p["ret"] else "2",
-        "originAirport": p["origin"], "originCity": "", "originCountry": "",
-        "originAirportIsAny": "true" if o and o["kind"] == "metro" else "false",
-        "destinationAirport": p["dest"], "destinCity": "", "destinCountry": "",
-        "destinAirportIsAny": "true" if d and d["kind"] == "metro" else "false",
-        "novo-resultado-voos": "true",
-    }
-    if p["ret"]:
-        q["returnDate"] = date_to_epoch_ms(p["ret"])
-    return "https://www.smiles.com.br/mfe/emissao-passagem/?" + urlencode(q)
+    return mfe_url(p["origin"], p["dest"], p["out"], p["ret"],
+                   p["adults"], p["children"], p["infants"], p["cabin"])
 
 
 @app.get("/")
@@ -194,13 +239,20 @@ def api_status():
     if demo:
         return jsonify({"configured": True, "demo": True, "locked": False,
                         "key_source": None, "key_error": None, "endpoint": None})
+    if BROWSER_SEMPRE:
+        # No modo navegador quem carrega a chave e o proprio site; nao ha o
+        # que configurar aqui, e dizer "sem chave" seria enganoso.
+        return jsonify({"configured": True, "demo": False, "locked": False,
+                        "key_source": "navegador", "key_error": None,
+                        "modo": _modo_busca(), "endpoint": None})
     r = _resolver_chave()
     return jsonify({
         "configured": bool(r["key"]),
         "demo": False,
         "locked": False,
-        "key_source": r["source"],      # manual | auto | auto (cache)
+        "key_source": r["source"],      # manual | auto | auto (cache) | navegador
         "key_error": r["error"],        # por que a descoberta falhou, se falhou
+        "modo": _modo_busca(),          # http | navegador
         "endpoint": r["url"] or cfg.search_url,
     })
 

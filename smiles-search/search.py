@@ -99,6 +99,29 @@ def cmd_search(args: argparse.Namespace) -> int:
             return 0
         _print_table(parse_flights(data), args.clube)
         return 0
+    if args.navegador:
+        # Faz a busca dentro do Chromium, na propria pagina do SMILES. E o
+        # caminho quando a protecao anti-bot recusa a requisicao HTTP (406).
+        from smiles import navegador
+        try:
+            data = navegador.search(
+                origin=args.origin.upper(), dest=args.dest.upper(),
+                departure_date=args.out, return_date=args.ret,
+                adults=args.adults, children=args.children,
+                infants=args.infants, cabin=args.cabin.upper(),
+                headless=not args.show,
+            )
+        except navegador.NavegadorError as exc:
+            print(f"Falha no modo navegador: {exc}", file=sys.stderr)
+            return 2
+        finally:
+            navegador.fechar()
+        if args.json:
+            json.dump(data, sys.stdout, ensure_ascii=False, indent=2)
+            print()
+            return 0
+        _print_table(parse_flights(data), args.clube)
+        return 0
     if not cfg.is_usable:
         print(
             "Sem x-api-key configurada. Rode primeiro:\n  python search.py capture",
@@ -154,6 +177,10 @@ def build_parser() -> argparse.ArgumentParser:
     ps.add_argument("--clube", action="store_true",
                     help="voce assina o Clube Smiles (mostra a tarifa de assinante)")
     ps.add_argument("--json", action="store_true", help="imprime o JSON cru")
+    ps.add_argument("--navegador", action="store_true",
+                    help="busca dentro do Chromium (use quando der HTTP 406)")
+    ps.add_argument("--show", action="store_true",
+                    help="com --navegador: mostra a janela do Chromium")
     ps.set_defaults(func=cmd_search)
     return p
 

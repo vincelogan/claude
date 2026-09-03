@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import threading
 import time
-from datetime import datetime, timezone
 
 import requests
 
 from .autokey import browser_headers
 from .config import SmilesConfig
+from .urls import date_to_epoch_ms  # noqa: F401  (reexportado: server/search usam daqui)
 
 BROWSER_UA = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -36,17 +36,9 @@ class SmilesError(RuntimeError):
     pass
 
 
-def date_to_epoch_ms(date_str: str) -> int:
-    """'2027-05-07' -> epoch ms no meio-dia de Brasilia daquele dia.
-
-    O SMILES indexa a busca pelo DIA; o horario dentro do dia e irrelevante
-    para o resultado. Usamos meio-dia porque e o valor observado na URL real
-    do site e nao corre risco de cair no dia anterior/seguinte por fuso.
-    """
-    d = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-    # Meio-dia de Brasilia (15h UTC): e o que a URL real do SMILES usa e da
-    # 12h de folga de cada lado da virada do dia, imune a fuso.
-    return int(d.timestamp() * 1000) + 15 * 3600 * 1000
+# Uma unica definicao de data para o projeto inteiro (smiles/urls.py). Ja
+# houve divergencia aqui — o cliente usava meia-noite e a URL do site,
+# meio-dia — e um dia de diferenca muda o resultado da busca.
 
 
 class SmilesClient:
