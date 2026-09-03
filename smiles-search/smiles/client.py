@@ -36,12 +36,16 @@ class SmilesError(RuntimeError):
 
 
 def date_to_epoch_ms(date_str: str) -> int:
-    """'2027-05-07' -> epoch ms a meia-noite (tratada como referencia do dia).
+    """'2027-05-07' -> epoch ms no meio-dia de Brasilia daquele dia.
 
-    O SMILES usa meia-noite de Brasilia (UTC-3). Somamos 3h para bater o dia.
+    O SMILES indexa a busca pelo DIA; o horario dentro do dia e irrelevante
+    para o resultado. Usamos meio-dia porque e o valor observado na URL real
+    do site e nao corre risco de cair no dia anterior/seguinte por fuso.
     """
     d = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-    return int(d.timestamp() * 1000) + 3 * 3600 * 1000
+    # Meio-dia de Brasilia (15h UTC): e o que a URL real do SMILES usa e da
+    # 12h de folga de cada lado da virada do dia, imune a fuso.
+    return int(d.timestamp() * 1000) + 15 * 3600 * 1000
 
 
 class SmilesClient:

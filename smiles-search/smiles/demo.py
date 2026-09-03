@@ -35,12 +35,12 @@ def _rng(seed: int):
     return nxt
 
 
-def demo_search(origin: str, dest: str, departure_date: str, cabin: str = "ALL", **_kw) -> dict:
-    """Devolve um envelope no MESMO formato que o parser espera."""
+def _segmento(origin: str, dest: str, day_str: str, cabin: str) -> dict:
+    """Um trecho sintetico, no mesmo formato de um item de requestedFlightSegmentList."""
     o = resolve(origin) or {"airports": [origin]}
     d = resolve(dest) or {"airports": [dest]}
-    day = datetime.strptime(departure_date, "%Y-%m-%d")
-    rnd = _rng(_seed(origin, dest, departure_date))
+    day = datetime.strptime(day_str, "%Y-%m-%d")
+    rnd = _rng(_seed(origin, dest, day_str))
 
     intl = (o.get("country", "BR") != d.get("country", "BR"))
     base = 85000 if intl else 18000
@@ -77,4 +77,18 @@ def demo_search(origin: str, dest: str, departure_date: str, cabin: str = "ALL",
                 {"type": "SMILES", "miles": miles, "money": taxes, "availableSeats": seats},
             ],
         })
-    return {"requestedFlightSegmentList": [{"flightList": flights}], "demo": True}
+    return {"flightList": flights}
+
+
+def demo_search(origin: str, dest: str, departure_date: str, cabin: str = "ALL",
+                return_date: str | None = None, **_kw) -> dict:
+    """Envelope no MESMO formato do SMILES: um segmento por trecho.
+
+    Gerar a volta aqui e essencial — sem ela o caminho de ida-e-volta nunca
+    seria exercitado nos testes, que foi como um bug de mistura de trechos
+    passou despercebido.
+    """
+    segs = [_segmento(origin, dest, departure_date, cabin)]
+    if return_date:
+        segs.append(_segmento(dest, origin, return_date, cabin))
+    return {"requestedFlightSegmentList": segs, "demo": True}

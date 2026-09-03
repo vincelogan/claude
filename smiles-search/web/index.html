@@ -156,6 +156,32 @@ input:disabled{opacity:.45}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
 
+/* ---- aviso de dados sinteticos ---- */
+#demo-banner{display:none;margin:14px 0 0;padding:12px 15px;border-radius:12px;
+  background:var(--amber);color:#fff;font-size:13.5px;line-height:1.45;
+  box-shadow:0 6px 18px rgba(224,125,24,.3)}
+#demo-banner.show{display:block}
+#demo-banner b{font-family:var(--disp);font-size:14px;display:block;margin-bottom:2px}
+
+/* ---- tarifas ---- */
+.leg-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:18px 3px 8px}
+.leg-head .lt{font-family:var(--disp);font-size:15px;font-weight:800}
+.leg-head .lm{font-family:var(--mono);font-size:12px;color:var(--sub)}
+.leg-head .lm b{color:var(--amber-ink)}
+.total-viagem{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  background:var(--amber-soft);border-radius:12px;padding:12px 16px;margin:14px 0 4px}
+.total-viagem .tv{font-family:var(--disp);font-size:13px;font-weight:800;color:var(--amber-ink);
+  text-transform:uppercase;letter-spacing:.06em}
+.total-viagem .tn{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.total-viagem .ts{font-size:12px;color:var(--sub)}
+.preco-linha{display:flex;flex-direction:column;gap:1px}
+.p-main{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.p-main .u{font-family:var(--sans);font-size:11.5px;color:var(--sub);font-weight:400}
+.p-sub{font-size:11.5px;color:var(--sub);font-family:var(--mono)}
+.p-sub.clube{color:var(--amber-ink)}
+.p-nd{font-size:12px;color:var(--faint)}
+
 /* ---- datas flexiveis (+-2 dias) ---- */
 #flex{margin-bottom:6px}
 .flex-blk{margin-bottom:10px}
@@ -285,6 +311,10 @@ input:disabled{opacity:.45}
     <p class="hint" id="hint">Preencha origem, destino e data de ida.</p>
     <div class="cap" id="cap"><button id="cap-btn">🔑 Capturar chave do SMILES (~30s)</button></div>
     <div class="err" id="err"></div>
+    <div id="demo-banner"><b>⚠️ MODO DEMO — estes números são inventados</b>
+      Os voos e as milhas abaixo são <b style="display:inline">dados sintéticos</b> para você
+      conhecer a plataforma. Não são preços reais do SMILES e não servem para decidir viagem.
+      Configure a chave da API para ver os valores de verdade.</div>
   </div>
 
   <div id="stage">
@@ -294,6 +324,7 @@ input:disabled{opacity:.45}
         <div class="sum" id="sum"></div>
         <div class="controls">
           <label><input type="checkbox" id="f-direto"> Só diretos</label>
+          <label title="A tarifa do Clube Smiles exige assinatura mensal paga"><input type="checkbox" id="f-clube"> Assino o Clube</label>
           <select id="f-sort">
             <option value="smart" selected>Diretos primeiro</option>
             <option value="miles">Menor milhagem</option>
@@ -326,7 +357,7 @@ input:disabled{opacity:.45}
       </div>
       <div class="grid-cal" id="cal-grid"></div>
       <div class="legend">
-        <span>milhas/dia (só ida):</span>
+        <span id="cal-tarifa">milhas/dia (só ida, tarifa padrão):</span>
         <span class="scale"><i style="background:var(--cal0)"></i><i style="background:var(--cal1)"></i><i style="background:var(--cal2)"></i><i style="background:var(--cal3)"></i><i style="background:var(--cal4)"></i></span>
         <span>barato → caro</span>
         <span>✈ tem direto</span>
@@ -345,6 +376,7 @@ const $=id=>document.getElementById(id);
 const sel={origem:null,destino:null};
 let tripType=1, flights=[], summary=null, smilesUrl=null, lastDemo=false, lastCached=false;
 let calMonth=null, calLeg="out", dayData={}, sweepAbort=false, sweeping=false;
+let clube=false;   // usuario assina o Clube Smiles? muda a tarifa de referencia
 
 /* ---------- util ---------- */
 const fmtMi=n=>n==null?"—":n.toLocaleString("pt-BR");
@@ -482,6 +514,7 @@ async function refreshStatus(){
   try{
     const s=await api("status");
     const el=$("status");
+    $("demo-banner").classList.toggle("show",!!s.demo);
     if(s.demo){el.className="chip demo";el.textContent="MODO DEMO";}
     else if(s.configured){el.className="chip";el.innerHTML='<span class="dot on"></span>chave OK';$("cap").style.display="none";}
     else{el.className="chip";el.innerHTML='<span class="dot off"></span>sem chave';$("cap").style.display="block";}
@@ -500,7 +533,7 @@ function payload(extra){
     origin:sel.origem.code,dest:sel.destino.code,
     out:$("ida").value,ret:(tripType===1?$("volta").value:null),
     adults:+$("adultos").value,children:+$("criancas").value,
-    infants:+$("bebes").value,cabin:$("cabine").value},extra||{});
+    infants:+$("bebes").value,cabin:$("cabine").value,clube:clube},extra||{});
 }
 
 /* ---------- LISTA ---------- */
@@ -523,52 +556,98 @@ async function doSearch(){
 }
 $("f-direto").addEventListener("change",renderList);
 $("f-sort").addEventListener("change",renderList);
+$("f-clube").addEventListener("change",()=>{clube=$("f-clube").checked;dayData={};
+  renderList();buildFlex();if(!$("view-cal").classList.contains("hidden"))startSweep();});
 
-function fareHTML(f){
-  return '<div class="fare"><b>'+fmtMi(f.milhas)+'</b> <small>milhas'+fmtR(f.dinheiro)+' · '+f.tipo+
-    (f.assentos!=null?(' · '+f.assentos+' assentos'):'')+'</small></div>';
+/* Preco de um voo, separando o que qualquer um paga do que so assinante paga. */
+function precoHTML(v){
+  const padrao=v.milhas_padrao, cl=v.milhas_clube;
+  const ref = clube ? (cl!=null?cl:padrao) : padrao;
+  if(ref==null) return '<div class="p-nd">sem tarifa só-milhas</div>';
+  const taxa = v.taxas?('<span class="u"> + R$ '+v.taxas.toLocaleString("pt-BR",{minimumFractionDigits:2})+'</span>'):"";
+  let out='<div class="p-main">'+fmtMi(ref)+' <span class="u">milhas</span>'+taxa+'</div>';
+  // sempre mostra o outro nivel, para o numero nunca enganar
+  if(clube){
+    if(padrao!=null&&padrao!==ref) out+='<div class="p-sub">sem Clube: '+fmtMi(padrao)+'</div>';
+  }else if(cl!=null&&cl!==ref){
+    out+='<div class="p-sub clube">Clube: '+fmtMi(cl)+' (exige assinatura)</div>';
+  }
+  const md=(v.fares||[]).filter(f=>f.com_dinheiro&&f.milhas!=null);
+  if(md.length) out+='<div class="p-sub">+dinheiro: '+fmtMi(md[0].milhas)+' mi'+
+    (md[0].dinheiro?(' + R$ '+md[0].dinheiro.toLocaleString("pt-BR",{minimumFractionDigits:2})):'')+'</div>';
+  const as=(v.fares||[]).map(f=>f.assentos).filter(x=>x!=null);
+  if(as.length){const n=Math.max.apply(null,as);
+    out+='<div class="p-sub">'+n+(n===1?' assento':' assentos')+'</div>';}
+  return out;
 }
 function card(v,isBest){
   const d=document.createElement("div");
   d.className="voo"+(v.direto?" direto-card":"");
   d.innerHTML='<div><div class="rt"><span class="rota">'+v.origem+' <span>→</span> '+v.destino+'</span>'+
     (v.direto?'<span class="tag direto">DIRETO</span>':'')+
-    (isBest?'<span class="tag best">MENOR PREÇO</span>':'')+'</div>'+
+    (isBest?'<span class="tag best">MENOR DO TRECHO</span>':'')+'</div>'+
     '<div class="meta">'+v.partida+' → '+v.chegada+' · '+v.duracao_str+' · '+
     (v.direto?'direto':v.paradas+' conexão(ões)')+' · '+v.companhia+' '+v.numero+'</div></div>'+
-    '<div class="fares">'+(v.fares||[]).map(fareHTML).join("")+'</div>';
+    '<div class="fares"><div class="preco-linha">'+precoHTML(v)+'</div></div>';
   return d;
 }
 function renderList(){
   const list=$("list");list.innerHTML="";
-  let fs=flights.slice();
-  if($("f-direto").checked)fs=fs.filter(v=>v.direto);
-  const mode=$("f-sort").value;
-  const mi=v=>v.melhor==null?1e15:v.melhor;
-  if(mode==="miles")fs.sort((a,b)=>mi(a)-mi(b));
-  else if(mode==="duration")fs.sort((a,b)=>(a.duracao_min??1e9)-(b.duracao_min??1e9));
-  else if(mode==="departure")fs.sort((a,b)=>a.partida.localeCompare(b.partida));
-  else fs.sort((a,b)=>(a.direto?0:1)-(b.direto?0:1)||mi(a)-mi(b));
+  const ref=v=>{const p=clube?(v.milhas_clube!=null?v.milhas_clube:v.milhas_padrao):v.milhas_padrao;
+                return p==null?null:p;};
+  const rot=t=>t===0?"Ida":(t===1?"Volta":"Trecho "+(t+1));
+  const soDiretos=$("f-direto").checked, mode=$("f-sort").value;
 
-  const s=summary||{};
-  $("sum").innerHTML=
-    '<span class="s hot">menor: <b>'+fmtMi(s.cheapest)+'</b> mi</span>'+
-    (s.cheapest_direct!=null?'<span class="s">direto: <b>'+fmtMi(s.cheapest_direct)+'</b> mi</span>':'')+
-    '<span class="s">'+(s.total||0)+' voos · '+(s.directs||0)+' diretos</span>'+
-    (lastCached?'<span class="s">cache</span>':'')+(lastDemo?'<span class="s hot">demo</span>':'')+
-    (smilesUrl?'<a href="'+smilesUrl+'" target="_blank" rel="noopener">emitir no SMILES ↗</a>':'');
+  // O resumo e derivado DOS VOOS EXIBIDOS — assim o titulo nunca diz uma
+  // tarifa e mostra o numero de outra, nem soma trechos que a filtragem tirou.
+  const trechos=[...new Set(flights.map(v=>v.trecho))].sort((a,b)=>a-b);
+  const porTrecho=trechos.map(t=>{
+    let fs=flights.filter(v=>v.trecho===t);
+    if(soDiretos)fs=fs.filter(v=>v.direto);
+    if(mode==="miles")fs.sort((a,b)=>(ref(a)??1e15)-(ref(b)??1e15));
+    else if(mode==="duration")fs.sort((a,b)=>(a.duracao_min??1e9)-(b.duracao_min??1e9));
+    else if(mode==="departure")fs.sort((a,b)=>a.partida.localeCompare(b.partida));
+    else fs.sort((a,b)=>(a.direto?0:1)-(b.direto?0:1)||(ref(a)??1e15)-(ref(b)??1e15));
+    const precos=fs.map(ref).filter(x=>x!=null);
+    return {t,fs,menor:precos.length?Math.min.apply(null,precos):null,
+            diretos:fs.filter(v=>v.direto).length};
+  });
+  // total so quando TODO trecho exibido tem preco (senao seria um numero falso)
+  const total=(porTrecho.length>1&&porTrecho.every(l=>l.menor!=null))
+    ? porTrecho.reduce((a,l)=>a+l.menor,0) : null;
 
-  if(!fs.length){list.innerHTML='<div class="vazio">Nenhum voo para esses filtros/datas.</div>';return;}
-  const best=Math.min.apply(null,fs.map(mi));
-  if(mode==="smart"&&fs.some(v=>v.direto)&&fs.some(v=>!v.direto)){
-    const dir=fs.filter(v=>v.direto),con=fs.filter(v=>!v.direto);
-    const h1=document.createElement("div");h1.className="sec";h1.textContent="Voos diretos ("+dir.length+")";list.appendChild(h1);
-    dir.forEach(v=>list.appendChild(card(v,mi(v)===best)));
-    const h2=document.createElement("div");h2.className="sec";h2.textContent="Com conexões ("+con.length+")";list.appendChild(h2);
-    con.forEach(v=>list.appendChild(card(v,mi(v)===best)));
-  }else{
-    fs.forEach(v=>list.appendChild(card(v,mi(v)===best)));
+  let chips="";
+  porTrecho.forEach(l=>{chips+='<span class="s">'+rot(l.t)+': <b>'+fmtMi(l.menor)+'</b> mi</span>';});
+  if(total!=null)chips+='<span class="s hot">viagem toda: <b>'+fmtMi(total)+'</b> mi</span>';
+  const nvoos=porTrecho.reduce((a,l)=>a+l.fs.length,0);
+  const ndir=porTrecho.reduce((a,l)=>a+l.diretos,0);
+  chips+='<span class="s">'+nvoos+' voos · '+ndir+' diretos</span>';
+  chips+='<span class="s">'+(clube?"tarifa Clube":"tarifa padrão")+'</span>';
+  if(lastCached)chips+='<span class="s">cache</span>';
+  if(lastDemo)chips+='<span class="s hot">DADOS DEMO</span>';
+  if(smilesUrl)chips+='<a href="'+smilesUrl+'" target="_blank" rel="noopener">emitir no SMILES ↗</a>';
+  $("sum").innerHTML=chips;
+
+  let algum=false;
+  porTrecho.forEach(l=>{
+    if(!l.fs.length)return;
+    algum=true;
+    const h=document.createElement("div");h.className="leg-head";
+    h.innerHTML='<span class="lt">'+rot(l.t)+'</span>'+
+      '<span class="lm">'+l.fs.length+' voos · '+l.diretos+' diretos · menor <b>'+fmtMi(l.menor)+'</b> mi</span>';
+    list.appendChild(h);
+    l.fs.forEach(v=>list.appendChild(card(v,ref(v)!=null&&ref(v)===l.menor)));
+  });
+
+  if(total!=null){
+    const t=document.createElement("div");t.className="total-viagem";
+    t.innerHTML='<span class="tv">Viagem completa</span>'+
+      '<span class="tn">'+fmtMi(total)+' milhas</span>'+
+      '<span class="ts">soma do menor de cada trecho'+(soDiretos?", só diretos":"")+
+      ' · '+(clube?"tarifa Clube (exige assinatura)":"tarifa padrão Smiles")+'</span>';
+    list.appendChild(t);
   }
+  if(!algum)list.innerHTML='<div class="vazio">Nenhum voo para esses filtros/datas.</div>';
 }
 
 /* ---------- CALENDARIO ---------- */
@@ -596,7 +675,7 @@ function monthDays(){
   return days;
 }
 function keyOD(o,d,ds){ // chave de cache por trecho/dia/pax/cabine
-  return o+">"+d+">"+ds+">"+$("cabine").value+">"+$("adultos").value+"-"+$("criancas").value+"-"+$("bebes").value;
+  return o+">"+d+">"+ds+">"+$("cabine").value+">"+$("adultos").value+"-"+$("criancas").value+"-"+$("bebes").value+">"+(clube?"C":"P");
 }
 function legKey(dstr){
   const o=calLeg==="out"?sel.origem.code:sel.destino.code;
@@ -607,7 +686,7 @@ async function getDay(o,d,ds){
   const k=keyOD(o,d,ds);
   if(dayData[k])return dayData[k];
   const j=await api("day",{origin:o,dest:d,out:ds,
-    adults:+$("adultos").value,children:+$("criancas").value,infants:+$("bebes").value,cabin:$("cabine").value});
+    adults:+$("adultos").value,children:+$("criancas").value,infants:+$("bebes").value,cabin:$("cabine").value,clube:clube});
   if(!j.ok)throw Object.assign(new Error(j.error||"erro"),{needsCap:j.needs_capture});
   dayData[k]={cheapest:j.cheapest,cheapest_direct:j.cheapest_direct};
   return dayData[k];
@@ -698,6 +777,7 @@ function drawGrid(){
     g.appendChild(cell);
   });
   $("cal-mes").textContent=MESES[calMonth.getMonth()]+" "+calMonth.getFullYear();
+  $("cal-tarifa").textContent="milhas/dia (só ida, "+(clube?"tarifa Clube":"tarifa padrão")+"):";
 }
 async function startSweep(){
   if(!sel.origem||!sel.destino)return;
@@ -719,7 +799,7 @@ async function startSweep(){
     try{
       const j=await api("day",{origin:o,dest:dd,out:ds,
         adults:+$("adultos").value,children:+$("criancas").value,
-        infants:+$("bebes").value,cabin:$("cabine").value});
+        infants:+$("bebes").value,cabin:$("cabine").value,clube:clube});
       if(j.ok)dayData[legKey(ds)]={cheapest:j.cheapest,cheapest_direct:j.cheapest_direct};
       else{showErr(j.error,j.needs_capture);break;}
     }catch(e){showErr("Erro na varredura: "+e);break;}

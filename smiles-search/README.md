@@ -13,6 +13,35 @@ forma programática, para você mesmo, sem ficar clicando manualmente no site.
 
 ---
 
+## 0. Fidelidade dos números (leia antes de confiar em qualquer milhagem)
+
+A plataforma segue quatro regras para nunca mostrar uma milhagem que não
+corresponde ao que o SMILES cobra. Todas estão travadas em
+`tests/test_fidelidade.py` (`python tests/test_fidelidade.py`).
+
+1. **Ida e volta são trechos separados.** O SMILES devolve um segmento por
+   trecho. Eles aparecem em seções próprias (Ida / Volta), cada uma com o seu
+   menor preço, e o **total da viagem** é a soma dos dois — nunca o preço de
+   um trecho só apresentado como se fosse o da viagem.
+2. **Tarifa do Clube nunca substitui a padrão.** `SMILES` é o que qualquer
+   pessoa paga; `SMILES_CLUB` exige a assinatura mensal do Clube Smiles. O
+   número em destaque é o **padrão**, com o do Clube exibido ao lado e
+   rotulado "exige assinatura". A caixa **"Assino o Clube"** inverte a
+   referência — e aí todos os números (cards, resumo e total) mudam juntos.
+3. **Milhas+dinheiro não entram no preço "só milhas".** As tarifas com
+   `MONEY` são outro produto: aparecem listadas, mas não viram o preço de
+   referência em milhas.
+4. **Nada é estimado.** Campo ausente vira `—`. O total da viagem só aparece
+   se **todos** os trechos exibidos tiverem preço; somar trecho incompleto
+   daria um número falso.
+
+> ⚠️ **Modo demo.** Sem chave configurada, a plataforma gera voos
+> **sintéticos** e avisa com uma faixa laranja no topo, o selo `MODO DEMO` e
+> o chip `DADOS DEMO`. Esses números **são inventados** e não servem para
+> decidir viagem.
+
+---
+
 ## 1. Como o SMILES funciona por dentro (a "dinâmica e sistemática")
 
 Quando você abre uma busca no site, a URL é algo assim (a que você mandou):
@@ -49,8 +78,12 @@ app React; **eles não são a busca em si**. Decodificando os da sua URL:
 | `destinAirportIsAny`     | `true`        | expande NYC→JFK,EWR,LGA |
 | `novo-resultado-voos`    | `true`        | feature flag da tela nova de resultados |
 
-**Dica de datas:** o SMILES usa **epoch em milissegundos, à meia-noite no
-horário de Brasília**. Para gerar: `int(datetime(2027,5,7).timestamp())*1000`.
+**Dica de datas:** o SMILES usa **epoch em milissegundos** e indexa a busca
+pelo **dia** — o horário dentro do dia não muda o resultado. A URL real que
+serviu de referência usava meia-noite de Brasília na ida e meio-dia na volta;
+a ferramenta padroniza em **meio-dia de Brasília** (15h UTC), que reproduz
+exatamente o `returnDate` observado e dá 12h de folga de cada lado da virada
+do dia, imune a fuso.
 
 ### 1.2. A API por trás (o que realmente busca os voos — o "modus operandi")
 

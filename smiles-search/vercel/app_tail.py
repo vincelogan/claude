@@ -57,7 +57,9 @@ class SmilesError(RuntimeError):
 
 def date_to_epoch_ms(date_str: str) -> int:
     d = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-    return int(d.timestamp() * 1000) + 3 * 3600 * 1000
+    # Meio-dia de Brasilia (15h UTC): e o que a URL real do SMILES usa e da
+    # 12h de folga de cada lado da virada do dia, imune a fuso.
+    return int(d.timestamp() * 1000) + 15 * 3600 * 1000
 
 
 def live_search(origin, dest, departure_date, return_date, adults, children, infants, cabin):
@@ -115,6 +117,8 @@ def _validate(p):
         return "Origem/destino desconhecidos. Use o autocomplete."
     if p["origin"] == p["dest"]:
         return "Origem e destino são iguais."
+    if p["ret"] and p["ret"] < p["out"]:
+        return "A volta não pode ser antes da ida."
     return None
 
 
@@ -124,7 +128,8 @@ def _raw_search(p):
     if hit is not None:
         return hit, True
     if DEMO:
-        raw = demo_search(p["origin"], p["dest"], p["out"], cabin=p["cabin"])
+        raw = demo_search(p["origin"], p["dest"], p["out"], cabin=p["cabin"],
+                          return_date=p["ret"])
     else:
         raw = live_search(p["origin"], p["dest"], p["out"], p["ret"],
                           p["adults"], p["children"], p["infants"], p["cabin"])
@@ -132,29 +137,37 @@ def _raw_search(p):
     return raw, False
 
 
-def _summary(voos):
-    best = best_direct = None
-    for v in voos:
-        m = v.menor_milhas
-        if m >= 10 ** 12:
-            continue
-        if best is None or m < best:
-            best = m
-        if v.paradas == 0 and (best_direct is None or m < best_direct):
-            best_direct = m
-    return {"cheapest": best, "cheapest_direct": best_direct,
-            "directs": sum(1 for v in voos if v.paradas == 0), "total": len(voos)}
+def _voo_json(v, clube):
+    """Serializa um voo SEM esconder a diferenca entre tarifa padrao e Clube."""
+    return {
+        "origem": v.origem, "destino": v.destino,
+        "partida": v.partida, "chegada": v.chegada,
+        "companhia": v.companhia, "numero": v.numero,
+        "paradas": v.paradas, "direto": v.paradas == 0,
+        "duracao_min": v.duracao_min, "duracao_str": v.duracao_str(),
+        "cabine": v.cabine, "trecho": v.trecho,
+        "milhas_padrao": v.milhas_padrao,
+        "milhas_clube": v.milhas_clube,
+        "preco": v.preco(clube),
+        "taxas": v.taxas,
+        "fares": [{"tipo": f.tipo, "rotulo": f.rotulo(), "milhas": f.milhas,
+                   "dinheiro": f.dinheiro, "assentos": f.assentos,
+                   "clube": f.clube, "com_dinheiro": f.com_dinheiro}
+                  for f in v.fares],
+    }
 
 
-def _sort(voos, mode):
+def _sort(voos, mode, clube):
+    """Ordena DENTRO de cada trecho; a ordem dos trechos (ida, volta) e mantida."""
     if mode == "miles":
-        voos.sort(key=lambda v: v.menor_milhas)
+        key = lambda v: (v.trecho, v.ordem(clube))
     elif mode == "duration":
-        voos.sort(key=lambda v: (v.duracao_min if v.duracao_min is not None else 10 ** 9))
+        key = lambda v: (v.trecho, v.duracao_min if v.duracao_min is not None else 10**9)
     elif mode == "departure":
-        voos.sort(key=lambda v: v.partida)
+        key = lambda v: (v.trecho, v.partida)
     else:
-        voos.sort(key=lambda v: (0 if v.paradas == 0 else 1, v.menor_milhas))
+        key = lambda v: (v.trecho, 0 if v.paradas == 0 else 1, v.ordem(clube))
+    voos.sort(key=key)
     return voos
 
 
@@ -238,7 +251,7 @@ def handler(_p):
 
     if action in ("search", "day"):
         if not _authorized():
-            return jsonify({"ok": False, "error": "Código de acesso inválido."}), 401
+            return jsonify({"ok": False, "error": "Codigo de acesso invalido."}), 401
         p = _params(body)
         if action == "day":
             p["ret"] = None
@@ -250,18 +263,24 @@ def handler(_p):
         except SmilesError as exc:
             return jsonify({"ok": False, "error": str(exc)}), 502
 
-        if action == "day":
-            return jsonify({"ok": True, "date": p["out"], "cached": cached,
-                            "demo": DEMO, **_summary(parse_flights(raw))})
+        clube = bool(body.get("clube"))
+        voos = parse_flights(raw)
+        r = resumo(voos, clube)
 
-        voos = _sort(parse_flights(raw), body.get("sort") or "smart")
+        if action == "day":
+            leg = r["legs"][0] if r["legs"] else {"cheapest": None, "cheapest_direct": None,
+                                                  "directs": 0, "total": 0}
+            return jsonify({"ok": True, "date": p["out"], "cached": cached, "demo": DEMO,
+                            "cheapest": leg["cheapest"],
+                            "cheapest_direct": leg["cheapest_direct"],
+                            "directs": leg["directs"], "total": leg["total"]})
+
+        _sort(voos, body.get("sort") or "smart", clube)
         if body.get("direct_only"):
             voos = [v for v in voos if v.paradas == 0]
-        out = [dict(asdict(v), duracao_str=v.duracao_str(), direto=v.paradas == 0,
-                    melhor=(v.menor_milhas if v.menor_milhas < 10 ** 12 else None))
-               for v in voos]
-        return jsonify({"ok": True, "flights": out,
-                        "summary": _summary(parse_flights(raw)),
-                        "cached": cached, "demo": DEMO, "smiles_url": _smiles_url(p)})
+        return jsonify({"ok": True,
+                        "flights": [_voo_json(v, clube) for v in voos],
+                        "summary": r, "cached": cached, "demo": DEMO,
+                        "smiles_url": _smiles_url(p)})
 
-    return jsonify({"ok": False, "error": f"Ação desconhecida: {action!r}"}), 404
+    return jsonify({"ok": False, "error": f"Acao desconhecida: {action!r}"}), 404

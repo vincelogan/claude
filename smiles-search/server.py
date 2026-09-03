@@ -6,11 +6,12 @@ Roda so na sua maquina (127.0.0.1). Serve o frontend (web/index.html) e expoe:
   GET  /api/airports?q=rio      -> autocomplete de cidades/aeroportos
   GET  /api/status              -> config capturada? modo demo?
   POST /api/capture             -> roda a captura da x-api-key (Playwright)
-  POST /api/search              -> busca um dia; voos normalizados + resumo
+  POST /api/search              -> busca; voos por trecho + resumo fiel
   POST /api/day                 -> resumo leve de um dia (varredura do calendario)
 
-Modo demo (sem rede): api_key "demo" no config.json ou env SMILES_DEMO=1 —
-gera voos sinteticos estaveis para conhecer a plataforma antes da captura.
+FIDELIDADE: ida e volta sao trechos separados (nunca misturados), a tarifa
+padrao Smiles nunca e substituida pela do Clube, e o modo demo e sempre
+sinalizado na resposta (`demo: true`) para a interface avisar.
 
 Uso:  python server.py   e abra http://127.0.0.1:8777
 """
@@ -18,7 +19,6 @@ Uso:  python server.py   e abra http://127.0.0.1:8777
 from __future__ import annotations
 
 import os
-from dataclasses import asdict
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -29,7 +29,7 @@ from smiles.cache import SearchCache
 from smiles.client import SmilesClient, SmilesError, date_to_epoch_ms
 from smiles.config import load_config
 from smiles.demo import demo_search
-from smiles.parser import parse_flights
+from smiles.parser import parse_flights, resumo
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
 
@@ -61,6 +61,8 @@ def _validate(p: dict):
         return "Origem/destino desconhecidos. Use o autocomplete."
     if p["origin"] == p["dest"]:
         return "Origem e destino são iguais."
+    if p["ret"] and p["ret"] < p["out"]:
+        return "A volta não pode ser antes da ida."
     return None
 
 
@@ -68,7 +70,7 @@ def _raw_search(p: dict, force: bool = False):
     """Busca (cache -> demo/rede) e devolve (raw_json, from_cache, demo)."""
     cfg = load_config()
     demo = _demo_on(cfg)
-    key = cache.key(v=2, demo=int(demo), **{k: p[k] for k in
+    key = cache.key(v=3, demo=int(demo), **{k: p[k] for k in
                     ("origin", "dest", "out", "ret", "adults", "children", "infants", "cabin")})
     if not force:
         hit = cache.get(key)
@@ -76,7 +78,8 @@ def _raw_search(p: dict, force: bool = False):
             return hit, True, demo
 
     if demo:
-        raw = demo_search(p["origin"], p["dest"], p["out"], cabin=p["cabin"])
+        raw = demo_search(p["origin"], p["dest"], p["out"],
+                          cabin=p["cabin"], return_date=p["ret"])
     else:
         if not cfg.is_usable:
             raise SmilesError("Sem x-api-key. Capture a chave primeiro.")
@@ -89,34 +92,37 @@ def _raw_search(p: dict, force: bool = False):
     return raw, False, demo
 
 
-def _summary(voos) -> dict:
-    """Menor milhagem geral e do melhor voo direto."""
-    best = best_direct = None
-    for v in voos:
-        m = v.menor_milhas
-        if m >= 10**12:
-            continue
-        if best is None or m < best:
-            best = m
-        if v.paradas == 0 and (best_direct is None or m < best_direct):
-            best_direct = m
+def _voo_json(v, clube: bool) -> dict:
+    """Serializa um voo SEM esconder a diferenca entre tarifa padrao e Clube."""
     return {
-        "cheapest": best,
-        "cheapest_direct": best_direct,
-        "directs": sum(1 for v in voos if v.paradas == 0),
-        "total": len(voos),
+        "origem": v.origem, "destino": v.destino,
+        "partida": v.partida, "chegada": v.chegada,
+        "companhia": v.companhia, "numero": v.numero,
+        "paradas": v.paradas, "direto": v.paradas == 0,
+        "duracao_min": v.duracao_min, "duracao_str": v.duracao_str(),
+        "cabine": v.cabine, "trecho": v.trecho,
+        "milhas_padrao": v.milhas_padrao,   # o que qualquer pessoa paga
+        "milhas_clube": v.milhas_clube,     # so assinantes do Clube Smiles
+        "preco": v.preco(clube),            # referencia conforme o perfil
+        "taxas": v.taxas,
+        "fares": [{"tipo": f.tipo, "rotulo": f.rotulo(), "milhas": f.milhas,
+                   "dinheiro": f.dinheiro, "assentos": f.assentos,
+                   "clube": f.clube, "com_dinheiro": f.com_dinheiro}
+                  for f in v.fares],
     }
 
 
-def _sort(voos, mode: str):
+def _sort(voos, mode: str, clube: bool):
+    """Ordena DENTRO de cada trecho; a ordem dos trechos (ida, volta) e mantida."""
     if mode == "miles":
-        voos.sort(key=lambda v: v.menor_milhas)
+        key = lambda v: (v.trecho, v.ordem(clube))
     elif mode == "duration":
-        voos.sort(key=lambda v: (v.duracao_min if v.duracao_min is not None else 10**9))
+        key = lambda v: (v.trecho, v.duracao_min if v.duracao_min is not None else 10**9)
     elif mode == "departure":
-        voos.sort(key=lambda v: v.partida)
-    else:  # "smart": diretos primeiro, cada bloco por menor milhagem
-        voos.sort(key=lambda v: (0 if v.paradas == 0 else 1, v.menor_milhas))
+        key = lambda v: (v.trecho, v.partida)
+    else:  # "smart": diretos primeiro dentro do trecho
+        key = lambda v: (v.trecho, 0 if v.paradas == 0 else 1, v.ordem(clube))
+    voos.sort(key=key)
     return voos
 
 
@@ -157,6 +163,7 @@ def api_status():
     return jsonify({
         "configured": cfg.is_usable or demo,
         "demo": demo,
+        "locked": False,
         "endpoint": None if demo else (cfg.search_url if cfg.is_usable else None),
     })
 
@@ -184,16 +191,16 @@ def api_search():
         needs = any(t in str(exc) for t in ("x-api-key", "401", "403", "rotacionou"))
         return jsonify({"ok": False, "error": str(exc), "needs_capture": needs}), 502
 
+    clube = bool(body.get("clube"))
     voos = parse_flights(raw)
-    _sort(voos, body.get("sort") or "smart")
+    resumo_ = resumo(voos, clube)
+    _sort(voos, body.get("sort") or "smart", clube)
     if body.get("direct_only"):
         voos = [v for v in voos if v.paradas == 0]
-    out = [asdict(v) | {"duracao_str": v.duracao_str(),
-                        "direto": v.paradas == 0,
-                        "melhor": (v.menor_milhas if v.menor_milhas < 10**12 else None)}
-           for v in voos]
     return jsonify({
-        "ok": True, "flights": out, "summary": _summary(parse_flights(raw)),
+        "ok": True,
+        "flights": [_voo_json(v, clube) for v in voos],
+        "summary": resumo_,
         "cached": cached, "demo": demo, "smiles_url": _smiles_url(p),
     })
 
@@ -212,8 +219,12 @@ def api_day():
     except SmilesError as exc:
         needs = any(t in str(exc) for t in ("x-api-key", "401", "403", "rotacionou"))
         return jsonify({"ok": False, "error": str(exc), "needs_capture": needs}), 502
-    s = _summary(parse_flights(raw))
-    return jsonify({"ok": True, "date": p["out"], "cached": cached, "demo": demo, **s})
+    r = resumo(parse_flights(raw), bool(body.get("clube")))
+    leg = r["legs"][0] if r["legs"] else {"cheapest": None, "cheapest_direct": None,
+                                          "directs": 0, "total": 0}
+    return jsonify({"ok": True, "date": p["out"], "cached": cached, "demo": demo,
+                    "cheapest": leg["cheapest"], "cheapest_direct": leg["cheapest_direct"],
+                    "directs": leg["directs"], "total": leg["total"]})
 
 
 if __name__ == "__main__":
