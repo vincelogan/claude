@@ -103,10 +103,16 @@ def live_search(origin, dest, departure_date, return_date, adults, children,
         raise SmilesError(f"HTTP {r.status_code}: a x-api-key foi recusada e a "
                           "redescoberta automatica nao resolveu.")
     if r.status_code == 406:
+        # O corpo do Akamai traz referenceId e clientIP. O clientIP e o IP do
+        # servidor do Vercel: se a mesma busca funciona na sua maquina e falha
+        # aqui, o que o SMILES esta recusando e este IP de datacenter.
         raise SmilesError(
             "HTTP 406: a protecao anti-bot (Akamai) do SMILES recusou a "
-            "requisicao. Pode ser header faltando ou bloqueio do IP do "
-            "servidor. Rode a versao local para comparar.")
+            "requisicao antes de chegar na API. Resposta dela: "
+            + r.text[:200].replace("\n", " ")
+            + " | Rode a mesma busca na versao local (sua conexao): se la "
+              "funcionar, o bloqueio e do IP deste servidor e o caminho e "
+              "usar a versao local.")
     if r.status_code == 429:
         raise SmilesError("HTTP 429: muitas buscas. Aguarde um pouco.")
     if r.status_code >= 400:

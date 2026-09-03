@@ -111,11 +111,37 @@ class DiscoveryError(RuntimeError):
     """Nao foi possivel descobrir a chave — a mensagem explica o que falhou."""
 
 
+# Marcadores de pagina de desafio do Akamai. Quando a protecao intercepta,
+# ela devolve 200 com um HTML pequeno e sem os bundles do site — por fora
+# parece "a pagina mudou de formato", e nao e: e bloqueio.
+MARCAS_BLOQUEIO = ("akamai", "_abck", "bm-verify", "reference #",
+                   "access denied", "errors.edgesuite", "challenge")
+
+
 def _baixar(sess, url, timeout):
+    """Baixa um recurso. Levanta requests.RequestException em falha de rede."""
     r = sess.get(url, timeout=timeout, stream=True)
     r.raise_for_status()
     dados = r.raw.read(MAX_BYTES, decode_content=True) or b""
     return dados.decode("utf-8", "ignore")
+
+
+def _baixar_diag(sess, url, timeout):
+    """Como _baixar, mas devolve (texto, resumo) para o diagnostico.
+
+    Sem isto, uma pagina de bloqueio do Akamai (HTTP 200, corpo minusculo,
+    zero <script src>) fica indistinguivel de uma mudanca de layout do site.
+    """
+    r = sess.get(url, timeout=timeout, stream=True)
+    dados = r.raw.read(MAX_BYTES, decode_content=True) or b""
+    texto = dados.decode("utf-8", "ignore")
+    baixo = texto[:4000].lower()
+    marcas = [m for m in MARCAS_BLOQUEIO if m in baixo]
+    resumo = f"HTTP {r.status_code}, {len(dados)}B"
+    if marcas:
+        resumo += " [BLOQUEIO: " + ", ".join(marcas) + "]"
+    r.raise_for_status()
+    return texto, resumo
 
 
 def _scripts(html: str, base: str) -> list[str]:
@@ -172,7 +198,7 @@ def discover(timeout: int = 20, max_bundles: int = MAX_BUNDLES) -> dict:
 
     for pagina in PAGINAS:
         try:
-            html = _baixar(sess, pagina, timeout)
+            html, resumo_http = _baixar_diag(sess, pagina, timeout)
         except requests.RequestException as exc:
             diag.append(f"{pagina}: {type(exc).__name__}")
             continue
@@ -184,7 +210,7 @@ def discover(timeout: int = 20, max_bundles: int = MAX_BUNDLES) -> dict:
         url_busca = url_busca or u
 
         scripts = _scripts(html, pagina)
-        diag.append(f"{pagina}: {len(scripts)} bundles JS")
+        diag.append(f"{pagina}: {resumo_http}, {len(scripts)} bundles JS")
         for js in scripts[:max_bundles]:
             try:
                 corpo = _baixar(sess, js, timeout)
@@ -203,8 +229,12 @@ def discover(timeout: int = 20, max_bundles: int = MAX_BUNDLES) -> dict:
     if not candidatos:
         raise DiscoveryError(
             "Nao encontrei a x-api-key no JavaScript publico do SMILES. "
-            "O site pode ter mudado o formato. Diagnostico: " + " | ".join(diag)
-            + ". Alternativa: capture manualmente (DevTools > Network > filtro "
+            "Diagnostico: " + " | ".join(diag)
+            + ". Se aparecer '0 bundles JS' com corpo pequeno, o SMILES nao "
+            "entregou a pagina real (protecao anti-bot recusando este IP) — "
+            "rode a versao local, na sua propria conexao. Se o corpo for "
+            "grande, o site mudou de formato. Alternativa em qualquer caso: "
+            "capture a chave manualmente (DevTools > Network > filtro "
             "'search' > header x-api-key) e defina SMILES_API_KEY.")
 
     chave = max(candidatos.items(), key=lambda kv: (kv[1], len(kv[0])))[0]
