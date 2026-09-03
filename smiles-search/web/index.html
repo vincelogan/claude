@@ -352,8 +352,23 @@ const fmtK=n=>n==null?"":(n>=100000?Math.round(n/1000)+"k":(n/1000).toFixed(1).r
 const fmtR=v=>v?(" + R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:2})):"";
 const iso=d=>d.toISOString().slice(0,10);
 const fmtBR=s=>{if(!s)return"—";const[y,m,d]=s.split("-");return d+"/"+m+"/"+y;};
-async function api(path,body){
-  const r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{});
+let accessCode=null;try{accessCode=localStorage.getItem("radar-code");}catch(_){}
+/* A acao vai no caminho E na query: o servidor local roteia por caminho,
+   o serverless (Vercel) despacha por ?action=. Mesmo HTML nos dois. */
+async function api(action,body,qs){
+  const url="/api/"+action+"?action="+action+(qs?("&"+qs):"");
+  const headers={};
+  if(accessCode)headers["X-Access-Code"]=accessCode;
+  let opt;
+  if(body){headers["Content-Type"]="application/json";
+    opt={method:"POST",headers,body:JSON.stringify(body)};}
+  else opt={headers};
+  let r=await fetch(url,opt);
+  if(r.status===401){
+    const code=prompt("Código de acesso da plataforma:");
+    if(code){accessCode=code;try{localStorage.setItem("radar-code",code);}catch(_){}
+      headers["X-Access-Code"]=code;r=await fetch(url,opt);}
+  }
   return r.json();
 }
 function showErr(msg,needsCap){
@@ -390,7 +405,7 @@ function bind(name){
     const q=inp.value.trim();
     if(q.length<2){close();update();return;}
     timer=setTimeout(async()=>{
-      try{items=await (await fetch("/api/airports?q="+encodeURIComponent(q))).json();
+      try{items=await api("airports",null,"q="+encodeURIComponent(q));
           active=items.length?0:-1;draw();}catch(_){close();}
     },160);
     update();
@@ -465,7 +480,7 @@ function persist(){
 /* ---------- status/captura ---------- */
 async function refreshStatus(){
   try{
-    const s=await api("/api/status");
+    const s=await api("status");
     const el=$("status");
     if(s.demo){el.className="chip demo";el.textContent="MODO DEMO";}
     else if(s.configured){el.className="chip";el.innerHTML='<span class="dot on"></span>chave OK';$("cap").style.display="none";}
@@ -474,7 +489,7 @@ async function refreshStatus(){
 }
 $("cap-btn").onclick=async()=>{
   const b=$("cap-btn");b.disabled=true;b.textContent="Capturando… (~30s)";showErr("");
-  try{const j=await api("/api/capture",{});
+  try{const j=await api("capture",{});
     if(!j.ok)showErr("Falha na captura: "+j.error);}catch(e){showErr("Falha: "+e);}
   b.disabled=false;b.textContent="🔑 Capturar chave do SMILES (~30s)";refreshStatus();
 };
@@ -500,7 +515,7 @@ async function doSearch(){
   $("go-l").innerHTML='<span class="spin"></span>Buscando…';$("go").disabled=true;
   $("list").innerHTML='<div class="vazio"><span class="spin"></span>Consultando o SMILES…</div>';$("sum").innerHTML="";$("flex").innerHTML="";
   try{
-    const j=await api("/api/search",payload());
+    const j=await api("search",payload());
     if(!j.ok){$("list").innerHTML="";showErr(j.error,j.needs_capture);}
     else{flights=j.flights;summary=j.summary;smilesUrl=j.smiles_url;lastDemo=j.demo;lastCached=j.cached;renderList();buildFlex();}
   }catch(e){$("list").innerHTML="";showErr("Erro: "+e);}
@@ -591,7 +606,7 @@ function legKey(dstr){
 async function getDay(o,d,ds){
   const k=keyOD(o,d,ds);
   if(dayData[k])return dayData[k];
-  const j=await api("/api/day",{origin:o,dest:d,out:ds,
+  const j=await api("day",{origin:o,dest:d,out:ds,
     adults:+$("adultos").value,children:+$("criancas").value,infants:+$("bebes").value,cabin:$("cabine").value});
   if(!j.ok)throw Object.assign(new Error(j.error||"erro"),{needsCap:j.needs_capture});
   dayData[k]={cheapest:j.cheapest,cheapest_direct:j.cheapest_direct};
@@ -702,7 +717,7 @@ async function startSweep(){
     $("prog-t").textContent=(done+1)+"/"+total+" dias";
     $("prog-b").style.width=Math.round(done/Math.max(1,total)*100)+"%";
     try{
-      const j=await api("/api/day",{origin:o,dest:dd,out:ds,
+      const j=await api("day",{origin:o,dest:dd,out:ds,
         adults:+$("adultos").value,children:+$("criancas").value,
         infants:+$("bebes").value,cabin:$("cabine").value});
       if(j.ok)dayData[legKey(ds)]={cheapest:j.cheapest,cheapest_direct:j.cheapest_direct};

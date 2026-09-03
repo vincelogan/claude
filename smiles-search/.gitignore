@@ -9,3 +9,5 @@ __pycache__/
 .venv/
 venv/
 .env
+# saida gerada pelo vercel/build.py
+vercel/out/
