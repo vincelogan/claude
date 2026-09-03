@@ -31,6 +31,18 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 
 SEC_CH_UA = '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"'
 
+# So anuncia brotli se soubermos descompactar — senao a resposta viria
+# ilegivel. urllib3 usa o pacote brotli/brotlicffi quando presente.
+try:
+    import brotli as _brotli  # noqa: F401
+    _ACCEPT_ENC = "gzip, deflate, br"
+except ImportError:  # pragma: no cover
+    try:
+        import brotlicffi as _brotli  # noqa: F401
+        _ACCEPT_ENC = "gzip, deflate, br"
+    except ImportError:
+        _ACCEPT_ENC = "gzip, deflate"
+
 
 def browser_headers(**extra) -> dict:
     """Headers de navegador real. Sem isto o Akamai devolve 406."""
@@ -38,7 +50,7 @@ def browser_headers(**extra) -> dict:
         "User-Agent": UA,
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Encoding": _ACCEPT_ENC,
         "Origin": "https://www.smiles.com.br",
         "Referer": "https://www.smiles.com.br/",
         "sec-ch-ua": SEC_CH_UA,

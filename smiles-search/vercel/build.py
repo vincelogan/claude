@@ -116,8 +116,14 @@ def main() -> None:
 
     # Sem framework, o Vercel serve os estaticos da raiz do projeto.
     shutil.copy(ROOT / "web" / "index.html", OUT / "index.html")
-    (OUT / "requirements.txt").write_text("flask>=3.0\nrequests>=2.31\n", encoding="utf-8")
+    # brotli: sem ele nao anunciamos "br" no Accept-Encoding, e um Chrome real
+    # sempre anuncia. Header a menos = fingerprint de bot para o Akamai.
+    (OUT / "requirements.txt").write_text(
+        "flask>=3.0\nrequests>=2.31\nbrotli>=1.1\n", encoding="utf-8")
     (OUT / "vercel.json").write_text(json.dumps({
+        # gru1 = Sao Paulo. Sair do Brasil aproxima a requisicao do que o
+        # SMILES espera (e corta ~150ms de latencia por chamada).
+        "regions": ["gru1"],
         "rewrites": [{"source": "/api/(.*)", "destination": "/api/index"}],
         "functions": {"api/index.py": {"includeFiles": "index.html"}},
     }, indent=2) + "\n", encoding="utf-8")
