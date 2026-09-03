@@ -11,8 +11,22 @@ SEARCH_URL = os.environ.get(
     "https://api-air-flightsearch-prd.smiles.com.br/v1/airlines/search",
 )
 ACCESS_CODE = os.environ.get("ACCESS_CODE", "").strip()
-# Sem chave real -> modo demo, para o site funcionar assim que sobe.
-DEMO = os.environ.get("SMILES_DEMO") == "1" or API_KEY.lower() == "demo" or not API_KEY
+# Demo so quando pedido explicitamente. Sem chave manual, o sistema tenta
+# descobri-la sozinho no JS publico do SMILES (ver get_key acima).
+FORCE_DEMO = os.environ.get("SMILES_DEMO") == "1" or API_KEY.lower() == "demo"
+
+
+def _chave(force=False):
+    """Chave em uso: SMILES_API_KEY se definida, senao descoberta automatica."""
+    return get_key(preferida=API_KEY, force=force)
+
+
+def _modo():
+    """(demo?, info da chave) - demo se pedido, ou se a descoberta falhou."""
+    if FORCE_DEMO:
+        return True, {"key": None, "source": None, "error": None}
+    r = _chave()
+    return (r["key"] is None), r
 
 BROWSER_UA = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
@@ -62,9 +76,13 @@ def date_to_epoch_ms(date_str: str) -> int:
     return int(d.timestamp() * 1000) + 15 * 3600 * 1000
 
 
-def live_search(origin, dest, departure_date, return_date, adults, children, infants, cabin):
-    if not API_KEY:
-        raise SmilesError("Sem SMILES_API_KEY configurada nas variáveis de ambiente.")
+def live_search(origin, dest, departure_date, return_date, adults, children,
+                infants, cabin, _retry=True):
+    info = _chave()
+    if not info["key"]:
+        raise SmilesError(info["error"] or "Nao foi possivel obter a x-api-key.")
+    chave = info["key"]
+    url = info["url"] or SEARCH_URL
     params = {
         "originAirportCode": origin, "destinationAirportCode": dest,
         "departureDate": date_to_epoch_ms(departure_date),
@@ -74,18 +92,23 @@ def live_search(origin, dest, departure_date, return_date, adults, children, inf
     if return_date:
         params["returnDate"] = date_to_epoch_ms(return_date)
     headers = {
-        "x-api-key": API_KEY, "Accept": "application/json, text/plain, */*",
+        "x-api-key": chave, "Accept": "application/json, text/plain, */*",
         "Origin": "https://www.smiles.com.br", "Referer": "https://www.smiles.com.br/",
         "User-Agent": BROWSER_UA,
     }
     _throttle()
     try:
-        r = requests.get(SEARCH_URL, params=params, headers=headers, timeout=25)
+        r = requests.get(url, params=params, headers=headers, timeout=25)
     except requests.RequestException as exc:
         raise SmilesError(f"Falha de rede: {exc}") from exc
     if r.status_code in (401, 403):
-        raise SmilesError(f"HTTP {r.status_code}: a x-api-key expirou ou rotacionou. "
-                          "Capture a chave nova e atualize SMILES_API_KEY no Vercel.")
+        # A Gol rotacionou a chave: descobre a nova e tenta mais uma vez.
+        if _retry:
+            invalidate()
+            return live_search(origin, dest, departure_date, return_date, adults,
+                               children, infants, cabin, _retry=False)
+        raise SmilesError(f"HTTP {r.status_code}: a x-api-key foi recusada e a "
+                          "redescoberta automatica nao resolveu.")
     if r.status_code == 429:
         raise SmilesError("HTTP 429: muitas buscas. Aguarde um pouco.")
     if r.status_code >= 400:
@@ -122,12 +145,12 @@ def _validate(p):
     return None
 
 
-def _raw_search(p):
-    key = "|".join(f"{k}={p[k]}" for k in sorted(p)) + f"|demo={int(DEMO)}"
+def _raw_search(p, demo):
+    key = "|".join(f"{k}={p[k]}" for k in sorted(p)) + f"|demo={int(demo)}"
     hit = cache_get(key)
     if hit is not None:
         return hit, True
-    if DEMO:
+    if demo:
         raw = demo_search(p["origin"], p["dest"], p["out"], cabin=p["cabin"],
                           return_date=p["ret"])
     else:
@@ -237,8 +260,12 @@ def handler(_p):
         return _serve_page()
 
     if action == "status":
-        return jsonify({"configured": True, "demo": DEMO,
-                        "locked": bool(ACCESS_CODE), "endpoint": None if DEMO else SEARCH_URL})
+        demo, info = _modo()
+        return jsonify({"configured": True, "demo": demo,
+                        "locked": bool(ACCESS_CODE),
+                        "key_source": info.get("source"),
+                        "key_error": info.get("error"),
+                        "endpoint": None if demo else (info.get("url") or SEARCH_URL)})
 
     if action == "airports":
         return jsonify(suggest(request.args.get("q", "")))
@@ -258,8 +285,9 @@ def handler(_p):
         err = _validate(p)
         if err:
             return jsonify({"ok": False, "error": err}), 400
+        demo, _info = _modo()
         try:
-            raw, cached = _raw_search(p)
+            raw, cached = _raw_search(p, demo)
         except SmilesError as exc:
             return jsonify({"ok": False, "error": str(exc)}), 502
 
@@ -270,7 +298,7 @@ def handler(_p):
         if action == "day":
             leg = r["legs"][0] if r["legs"] else {"cheapest": None, "cheapest_direct": None,
                                                   "directs": 0, "total": 0}
-            return jsonify({"ok": True, "date": p["out"], "cached": cached, "demo": DEMO,
+            return jsonify({"ok": True, "date": p["out"], "cached": cached, "demo": demo,
                             "cheapest": leg["cheapest"],
                             "cheapest_direct": leg["cheapest_direct"],
                             "directs": leg["directs"], "total": leg["total"]})
@@ -280,7 +308,7 @@ def handler(_p):
             voos = [v for v in voos if v.paradas == 0]
         return jsonify({"ok": True,
                         "flights": [_voo_json(v, clube) for v in voos],
-                        "summary": r, "cached": cached, "demo": DEMO,
+                        "summary": r, "cached": cached, "demo": demo,
                         "smiles_url": _smiles_url(p)})
 
     return jsonify({"ok": False, "error": f"Acao desconhecida: {action!r}"}), 404

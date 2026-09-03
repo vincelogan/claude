@@ -36,6 +36,24 @@ def cmd_capture(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_autokey(args: argparse.Namespace) -> int:
+    """Testa a descoberta automatica da chave contra o site real do SMILES."""
+    from smiles import autokey
+    print("Procurando a x-api-key no JavaScript publico do SMILES...")
+    try:
+        r = autokey.discover(timeout=args.timeout)
+    except autokey.DiscoveryError as exc:
+        print(f"\n[FALHOU] {exc}", file=sys.stderr)
+        return 1
+    print("\nOK — chave descoberta automaticamente:")
+    print(f"  x-api-key  : {r['api_key'][:8]}... ({len(r['api_key'])} chars)")
+    print(f"  endpoint   : {r['search_url'] or '(usa o padrao embutido)'}")
+    print(f"  veio de    : {r['source']}")
+    print(f"  candidatos : {r['candidates']}")
+    print("\nNao precisa configurar nada: a plataforma faz isso sozinha a cada uso.")
+    return 0
+
+
 def _mi(n):
     return "—" if n is None else f"{n:,}".replace(",", ".")
 
@@ -119,6 +137,10 @@ def build_parser() -> argparse.ArgumentParser:
     pc = sub.add_parser("capture", help="captura a x-api-key/endpoint atuais via navegador")
     pc.add_argument("--show", action="store_true", help="mostra o navegador (nao-headless)")
     pc.set_defaults(func=cmd_capture)
+
+    pa = sub.add_parser("autokey", help="testa a descoberta automatica da chave (sem navegador)")
+    pa.add_argument("--timeout", type=int, default=20)
+    pa.set_defaults(func=cmd_autokey)
 
     ps = sub.add_parser("search", help="pesquisa voos")
     ps.add_argument("--origin", required=True, help="origem (IATA/metropole, ex.: RIO, GRU)")

@@ -34,12 +34,13 @@ import hmac
 import json
 import math
 import os
+import re
 import threading
 import time
 import unicodedata
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin
 
 import requests
 from flask import Flask, Response, jsonify, request
@@ -57,17 +58,60 @@ def clean(src: str) -> str:
     return "\n".join(keep)
 
 
+def nomes_topo(src: str) -> set[str]:
+    """Nomes definidos no nivel de modulo (def/class/atribuicao simples)."""
+    import ast
+    nomes = set()
+    try:
+        arvore = ast.parse(src)
+    except SyntaxError:
+        return nomes
+    for no in arvore.body:
+        if isinstance(no, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            nomes.add(no.name)
+        elif isinstance(no, ast.Assign):
+            for alvo in no.targets:
+                if isinstance(alvo, ast.Name):
+                    nomes.add(alvo.id)
+        elif isinstance(no, ast.AnnAssign) and isinstance(no.target, ast.Name):
+            nomes.add(no.target.id)
+    return nomes
+
+
+def checar_colisoes(pecas: dict[str, str]) -> None:
+    """Inlinar junta tudo num namespace so: nome repetido = um sobrescreve o outro.
+
+    Ja aconteceu (o _CACHE do autokey virou o cache de buscas do app_tail e a
+    descoberta da chave quebrou em producao), entao o build agora falha alto.
+    """
+    visto: dict[str, str] = {}
+    problemas = []
+    for origem, src in pecas.items():
+        for nome in nomes_topo(src):
+            if nome in visto:
+                problemas.append(f"{nome!r}: {visto[nome]} vs {origem}")
+            else:
+                visto[nome] = origem
+    if problemas:
+        raise SystemExit("ERRO: nomes colidem entre os modulos inlinados:\n  - "
+                         + "\n  - ".join(problemas))
+
+
 def main() -> None:
     if OUT.exists():
         shutil.rmtree(OUT)
     (OUT / "api").mkdir(parents=True)
 
+    pecas = {}
+    for mod in ("airports", "parser", "demo", "autokey"):
+        pecas[f"smiles/{mod}.py"] = clean((ROOT / "smiles" / f"{mod}.py").read_text(encoding="utf-8"))
+    pecas["vercel/app_tail.py"] = clean((BASE / "app_tail.py").read_text(encoding="utf-8"))
+    checar_colisoes(pecas)
+
     parts = [HEADER]
-    for mod in ("airports", "parser", "demo"):
-        parts.append(f"\n# ===== inlined: smiles/{mod}.py =====\n")
-        parts.append(clean((ROOT / "smiles" / f"{mod}.py").read_text(encoding="utf-8")))
-    parts.append(f"\n# ===== vercel/app_tail.py =====\n")
-    parts.append(clean((BASE / "app_tail.py").read_text(encoding="utf-8")))
+    for origem, src in pecas.items():
+        parts.append(f"\n# ===== inlined: {origem} =====\n")
+        parts.append(src)
     (OUT / "api" / "index.py").write_text("\n".join(parts) + "\n", encoding="utf-8")
 
     # Sem framework, o Vercel serve os estaticos da raiz do projeto.

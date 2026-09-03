@@ -35,6 +35,21 @@ corresponde ao que o SMILES cobra. Todas estão travadas em
    se **todos** os trechos exibidos tiverem preço; somar trecho incompleto
    daria um número falso.
 
+### Chave automática (nenhuma configuração necessária)
+
+A `x-api-key` **não é segredo** — o site do SMILES a embute no JavaScript
+público que todo visitante baixa. A plataforma faz o que o navegador faria:
+busca a página, lê os bundles JS e extrai a chave, por HTTP puro (sem
+navegador, então funciona no Vercel). Quando a Gol rotaciona a chave, um
+`401/403` dispara a redescoberta e a busca é repetida automaticamente.
+
+- **Não precisa definir `SMILES_API_KEY`.** Se você definir, ela tem
+  precedência (útil caso a descoberta falhe).
+- Confira na sua máquina: `python search.py autokey`
+- Cache de 6h para a chave achada, e de 5min após falha (não martela o site).
+- Se a descoberta falhar, a plataforma **diz o motivo na tela** e cai em modo
+  demo — nunca mostra número inventado sem avisar.
+
 > ⚠️ **Modo demo.** Sem chave configurada, a plataforma gera voos
 > **sintéticos** e avisa com uma faixa laranja no topo, o selo `MODO DEMO` e
 > o chip `DADOS DEMO`. Esses números **são inventados** e não servem para

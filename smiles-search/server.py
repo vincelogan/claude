@@ -27,7 +27,8 @@ from flask import Flask, jsonify, request, send_from_directory
 from smiles.airports import resolve, suggest
 from smiles.cache import SearchCache
 from smiles.client import SmilesClient, SmilesError, date_to_epoch_ms
-from smiles.config import load_config
+from smiles.config import SmilesConfig, load_config
+from smiles import autokey
 from smiles.demo import demo_search
 from smiles.parser import parse_flights, resumo
 
@@ -39,6 +40,27 @@ cache = SearchCache()
 
 def _demo_on(cfg) -> bool:
     return cfg.api_key == "demo" or os.environ.get("SMILES_DEMO") == "1"
+
+
+def _resolver_chave(force: bool = False) -> dict:
+    """Chave em uso: config.json capturado > SMILES_API_KEY > descoberta automatica."""
+    cfg = load_config()
+    preferida = cfg.api_key or os.environ.get("SMILES_API_KEY", "")
+    r = autokey.get_key(preferida=preferida, force=force)
+    if r["key"] and r["source"] == "manual":
+        r["url"] = cfg.search_url if cfg.is_usable else None
+    return r
+
+
+def _cliente(force: bool = False):
+    """Monta o cliente com a chave resolvida. Levanta SmilesError se nao houver."""
+    r = _resolver_chave(force=force)
+    if not r["key"]:
+        raise SmilesError(r["error"] or "Nao foi possivel obter a x-api-key.")
+    cfg = load_config()
+    url = r["url"] or (cfg.search_url if cfg.search_url else None)
+    return SmilesClient(SmilesConfig(api_key=r["key"], search_url=url) if url
+                        else SmilesConfig(api_key=r["key"])), r["source"]
 
 
 def _params(body: dict) -> dict:
@@ -81,13 +103,22 @@ def _raw_search(p: dict, force: bool = False):
         raw = demo_search(p["origin"], p["dest"], p["out"],
                           cabin=p["cabin"], return_date=p["ret"])
     else:
-        if not cfg.is_usable:
-            raise SmilesError("Sem x-api-key. Capture a chave primeiro.")
-        raw = SmilesClient(cfg).search(
-            origin=p["origin"], dest=p["dest"], departure_date=p["out"],
-            return_date=p["ret"], adults=p["adults"], children=p["children"],
-            infants=p["infants"], cabin=p["cabin"],
-        )
+        def _buscar(force):
+            cli, _ = _cliente(force=force)
+            return cli.search(
+                origin=p["origin"], dest=p["dest"], departure_date=p["out"],
+                return_date=p["ret"], adults=p["adults"], children=p["children"],
+                infants=p["infants"], cabin=p["cabin"],
+            )
+        try:
+            raw = _buscar(False)
+        except SmilesError as exc:
+            # 401/403 = a Gol rotacionou a chave: descobre de novo e tenta 1 vez
+            if any(t in str(exc) for t in ("401", "403", "rotacionou")):
+                autokey.invalidate()
+                raw = _buscar(True)
+            else:
+                raise
     cache.put(key, raw)
     return raw, False, demo
 
@@ -160,11 +191,17 @@ def api_airports():
 def api_status():
     cfg = load_config()
     demo = _demo_on(cfg)
+    if demo:
+        return jsonify({"configured": True, "demo": True, "locked": False,
+                        "key_source": None, "key_error": None, "endpoint": None})
+    r = _resolver_chave()
     return jsonify({
-        "configured": cfg.is_usable or demo,
-        "demo": demo,
+        "configured": bool(r["key"]),
+        "demo": False,
         "locked": False,
-        "endpoint": None if demo else (cfg.search_url if cfg.is_usable else None),
+        "key_source": r["source"],      # manual | auto | auto (cache)
+        "key_error": r["error"],        # por que a descoberta falhou, se falhou
+        "endpoint": r["url"] or cfg.search_url,
     })
 
 

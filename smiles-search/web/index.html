@@ -311,10 +311,7 @@ input:disabled{opacity:.45}
     <p class="hint" id="hint">Preencha origem, destino e data de ida.</p>
     <div class="cap" id="cap"><button id="cap-btn">🔑 Capturar chave do SMILES (~30s)</button></div>
     <div class="err" id="err"></div>
-    <div id="demo-banner"><b>⚠️ MODO DEMO — estes números são inventados</b>
-      Os voos e as milhas abaixo são <b style="display:inline">dados sintéticos</b> para você
-      conhecer a plataforma. Não são preços reais do SMILES e não servem para decidir viagem.
-      Configure a chave da API para ver os valores de verdade.</div>
+    <div id="demo-banner"></div>
   </div>
 
   <div id="stage">
@@ -514,10 +511,26 @@ async function refreshStatus(){
   try{
     const s=await api("status");
     const el=$("status");
-    $("demo-banner").classList.toggle("show",!!s.demo);
-    if(s.demo){el.className="chip demo";el.textContent="MODO DEMO";}
-    else if(s.configured){el.className="chip";el.innerHTML='<span class="dot on"></span>chave OK';$("cap").style.display="none";}
-    else{el.className="chip";el.innerHTML='<span class="dot off"></span>sem chave';$("cap").style.display="block";}
+    const bn=$("demo-banner");
+    bn.classList.toggle("show",!!s.demo);
+    if(s.demo){
+      el.className="chip demo";el.textContent="MODO DEMO";
+      bn.innerHTML='<b>⚠️ MODO DEMO — estes números são inventados</b>'+
+        'Os voos e as milhas abaixo são dados sintéticos. Não são preços reais do '+
+        'SMILES e não servem para decidir viagem.'+
+        (s.key_error?('<br><br><b style="display:inline">Motivo:</b> '+s.key_error)
+                    :' (modo demo ligado de propósito.)');
+      $("cap").style.display="block";
+    }else if(s.configured){
+      el.className="chip";
+      const auto=(s.key_source||"").indexOf("auto")===0;
+      el.innerHTML='<span class="dot on"></span>'+(auto?"chave automática":"chave manual");
+      el.title="Origem da x-api-key: "+(s.key_source||"?");
+      $("cap").style.display="none";
+    }else{
+      el.className="chip";el.innerHTML='<span class="dot off"></span>sem chave';
+      $("cap").style.display="block";
+    }
   }catch(_){$("status").innerHTML='<span class="dot off"></span>servidor?';}
 }
 $("cap-btn").onclick=async()=>{
