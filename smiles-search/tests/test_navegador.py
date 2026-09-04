@@ -131,13 +131,28 @@ def main() -> int:
     dados2 = sessao._buscar_via_url(base, timeout_ms=20000)
     ok(dados2 == dados, "segunda busca na mesma sessao devolve o mesmo JSON")
 
-    print("\n4) Erro claro quando a busca nao aparece")
-    try:
-        sessao._buscar_via_url(base + "?vazio=1&sem-busca=1", timeout_ms=1500)
-        # a pagina falsa SEMPRE busca, entao aqui nao deve falhar
-        ok(True, "pagina que busca sempre responde")
-    except navegador.NavegadorError:
-        ok(True, "pagina que busca sempre responde")
+    print("\n4) Buscas de THREADS DIFERENTES (e o que o Flask faz)")
+    # O Playwright sincrono so aceita chamadas da thread que o criou. Como o
+    # servidor atende cada requisicao numa thread nova, sem uma thread dona
+    # dedicada a segunda busca quebraria aqui.
+    import threading as _th
+    saidas, problemas = [], []
+
+    def buscar():
+        try:
+            saidas.append(sessao._buscar_via_url(base, timeout_ms=20000))
+        except Exception as exc:
+            problemas.append(f"{type(exc).__name__}: {exc}")
+
+    ts = [_th.Thread(target=buscar) for _ in range(3)]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join(timeout=60)
+    ok(not problemas, "tres threads buscaram sem erro" +
+       (" | " + "; ".join(problemas) if problemas else ""))
+    ok(len(saidas) == 3 and all(x == dados for x in saidas),
+       "as tres devolveram o mesmo JSON")
 
     sessao.close()
     srv.shutdown()

@@ -19,14 +19,26 @@ de la que e recusado).
 CUSTO
 -----
 Abrir o navegador leva alguns segundos. Por isso a instancia fica VIVA entre as
-buscas (`_SESSAO`) — sem isso a varredura de um mes no calendario abriria o
-Chromium 30 vezes. O acesso e serializado por um lock: uma busca por vez, o que
-tambem mantem o ritmo respeitoso com o servidor da Gol.
+buscas — sem isso a varredura de um mes no calendario abriria o Chromium 30
+vezes.
+
+UMA THREAD SO
+-------------
+O Playwright sincrono nao e apenas "nao thread-safe": ele so aceita chamadas da
+MESMA thread que o criou. E o Flask atende cada requisicao numa thread
+diferente, entao a segunda busca viria de outra thread e quebraria. Um lock nao
+resolve isso — serializa o acesso, mas nao muda quem chama.
+
+Por isso existe uma thread dedicada que e a unica dona do navegador. As buscas
+chegam por uma fila e voltam pelo mesmo caminho. De brinde, a fila serializa as
+buscas (uma por vez), que e o ritmo respeitoso que queremos com o servidor da
+Gol de qualquer forma.
 """
 
 from __future__ import annotations
 
 import os
+import queue
 import threading
 import time
 
@@ -63,23 +75,99 @@ def _pw():
 
 
 class SessaoNavegador:
-    """Um Chromium vivo, reaproveitado entre buscas.
+    """Um Chromium vivo, com uma thread dedicada como unica dona dele.
 
-    Playwright sincrono e preso a thread que o criou, entao TUDO aqui roda
-    sob `self._lock` — e o servidor Flask atende buscas em threads diferentes.
+    Todo objeto do Playwright e criado e usado dentro de `_loop`; nenhum outro
+    metodo os toca. Os metodos com sufixo `_aqui` sao os que so podem rodar na
+    thread dona — o nome existe para essa regra nao se perder.
     """
 
     def __init__(self, headless: bool = True):
         self.headless = headless
-        self._lock = threading.RLock()
+        self._fila: queue.Queue = queue.Queue()
+        self._thread: threading.Thread | None = None
+        self._lock = threading.Lock()      # protege so a criacao da thread
+        self._ultima_busca = 0.0
+        # Objetos do Playwright: SO a thread dona encosta neles.
         self._pw = None
         self._browser = None
         self._ctx = None
-        self._ultima_busca = 0.0
-        self._ultimo_uso = 0.0
 
-    # ---- ciclo de vida ----
-    def _abrir(self):
+    # ---- entrada (qualquer thread) ----
+    def _garantir_thread(self):
+        with self._lock:
+            if self._thread is None or not self._thread.is_alive():
+                self._thread = threading.Thread(
+                    target=self._loop, name="smiles-navegador", daemon=True)
+                self._thread.start()
+
+    def search(self, origin: str, dest: str, departure_date: str,
+               return_date: str | None = None, adults: int = 1,
+               children: int = 0, infants: int = 0, cabin: str = "ALL",
+               timeout_ms: int = ESPERA_MS) -> dict:
+        """Abre a busca no Chromium e devolve o JSON que o site recebeu."""
+        url = mfe_url(origin, dest, departure_date, return_date,
+                      adults, children, infants, cabin)
+        return self._buscar_via_url(url, timeout_ms)
+
+    def _buscar_via_url(self, url: str, timeout_ms: int = ESPERA_MS) -> dict:
+        """Manda a busca para a thread dona e espera a resposta.
+
+        Separado de `search` para os testes poderem apontar para um SMILES
+        falso local — o ambiente de desenvolvimento nao alcanca o site real.
+        """
+        self._garantir_thread()
+        caixa: dict = {}
+        pronto = threading.Event()
+        self._fila.put((url, timeout_ms, caixa, pronto))
+        # Folga generosa sobre o timeout da propria busca: a thread pode estar
+        # abrindo o navegador (segundos) ou atendendo a busca da frente.
+        if not pronto.wait(timeout=timeout_ms / 1000 + 180):
+            raise NavegadorError(
+                "O navegador nao respondeu a tempo. Feche o servidor e rode de "
+                "novo; se repetir, use SMILES_BROWSER_HEADED=1 para ver a janela.")
+        if "erro" in caixa:
+            raise caixa["erro"]
+        return caixa["ok"]
+
+    def close(self):
+        t = self._thread
+        if t is not None and t.is_alive():
+            self._fila.put(None)
+            t.join(timeout=30)
+        self._thread = None
+
+    # ---- thread dona ----
+    def _loop(self):
+        ultimo_uso = time.monotonic()
+        while True:
+            try:
+                job = self._fila.get(timeout=30)
+            except queue.Empty:
+                # Ninguem busca ha um tempao: devolve a memoria do Chromium.
+                if self._ctx is not None and (time.monotonic() - ultimo_uso) > OCIOSO_S:
+                    self._fechar_aqui()
+                continue
+            if job is None:
+                self._fechar_aqui()
+                return
+            url, timeout_ms, caixa, pronto = job
+            try:
+                self._abrir_aqui()
+                self._throttle()
+                caixa["ok"] = self._buscar_na_pagina(url, timeout_ms)
+            except NavegadorError as exc:
+                caixa["erro"] = exc
+            except Exception as exc:
+                # Navegador em estado ruim (crash, contexto morto): descarta,
+                # para a proxima busca comecar limpa em vez de repetir o erro.
+                self._fechar_aqui()
+                caixa["erro"] = NavegadorError(f"Falha no navegador: {exc}")
+            finally:
+                ultimo_uso = time.monotonic()
+                pronto.set()
+
+    def _abrir_aqui(self):
         if self._ctx is not None:
             return
         sync_playwright = _pw()
@@ -90,7 +178,7 @@ class SessaoNavegador:
         try:
             self._browser = self._pw.chromium.launch(**opcoes)
         except Exception as exc:
-            self._fechar_silencioso()
+            self._fechar_aqui()
             raise NavegadorError(
                 f"Nao consegui abrir o Chromium: {exc}\n"
                 "Rode 'python -m playwright install chromium', ou aponte um "
@@ -104,7 +192,7 @@ class SessaoNavegador:
             viewport={"width": 1366, "height": 900},
         )
 
-    def _fechar_silencioso(self):
+    def _fechar_aqui(self):
         for obj, metodo in ((self._ctx, "close"), (self._browser, "close"),
                             (self._pw, "stop")):
             if obj is not None:
@@ -114,52 +202,11 @@ class SessaoNavegador:
                     pass
         self._ctx = self._browser = self._pw = None
 
-    def close(self):
-        with self._lock:
-            self._fechar_silencioso()
-
-    def _reciclar_se_ocioso(self):
-        if self._ctx is not None and self._ultimo_uso and \
-                (time.monotonic() - self._ultimo_uso) > OCIOSO_S:
-            self._fechar_silencioso()
-
     def _throttle(self):
         espera = MIN_INTERVAL - (time.monotonic() - self._ultima_busca)
         if espera > 0:
             time.sleep(espera)
         self._ultima_busca = time.monotonic()
-
-    # ---- busca ----
-    def search(self, origin: str, dest: str, departure_date: str,
-               return_date: str | None = None, adults: int = 1,
-               children: int = 0, infants: int = 0, cabin: str = "ALL",
-               timeout_ms: int = ESPERA_MS) -> dict:
-        """Abre a busca no Chromium e devolve o JSON que o site recebeu."""
-        url = mfe_url(origin, dest, departure_date, return_date,
-                      adults, children, infants, cabin)
-        return self._buscar_via_url(url, timeout_ms)
-
-    def _buscar_via_url(self, url: str, timeout_ms: int = ESPERA_MS) -> dict:
-        """Abre uma URL e devolve o JSON da busca que a pagina disparar.
-
-        Separado de `search` para os testes poderem apontar para um SMILES
-        falso local — o ambiente de desenvolvimento nao alcanca o site real.
-        """
-        with self._lock:
-            self._reciclar_se_ocioso()
-            self._abrir()
-            self._throttle()
-            try:
-                return self._buscar_na_pagina(url, timeout_ms)
-            except NavegadorError:
-                raise
-            except Exception as exc:
-                # Navegador em estado ruim (crash, contexto morto): descarta,
-                # para a proxima busca comecar limpa em vez de repetir o erro.
-                self._fechar_silencioso()
-                raise NavegadorError(f"Falha no navegador: {exc}") from exc
-            finally:
-                self._ultimo_uso = time.monotonic()
 
     def _buscar_na_pagina(self, url: str, timeout_ms: int) -> dict:
         respostas: list[dict] = []
