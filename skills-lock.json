@@ -1,0 +1,89 @@
+{
+  "version": 2,
+  "skills": {
+    "data-manager-api-audience-ingestion": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/data-manager-api-audience-ingestion/SKILL.md",
+      "computedHash": "26ddd155b4c51b7097e0dfe88f38d79540f2483bf2f1fa92c5af27a0fdb9ffca"
+    },
+    "data-manager-api-event-ingestion": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/data-manager-api-event-ingestion/SKILL.md",
+      "computedHash": "bbad2f5dd42ee5268c13a4dfd53bad797c3faf574b0903a04ddf458325117077"
+    },
+    "data-manager-api-setup": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/data-manager-api-setup/SKILL.md",
+      "computedHash": "a0731a124d640efebe5772c15fcd1f8492c445598a62d0a4e24de71f60949ea0"
+    },
+    "google-ads-api-account-diagnostics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-ads-api-account-diagnostics/SKILL.md",
+      "computedHash": "0a43c003da8676ba58bd076a134a1a3524b45570fedbb21d0d058df83ee8117b"
+    },
+    "google-ads-api-mcp-setup": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-ads-api-mcp-setup/SKILL.md",
+      "computedHash": "5a2ac07b74640e345622da3f57de86ec0ed023ffc6b2d1747f19d07ccebe7706"
+    },
+    "google-ads-api-quickstart": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-ads-api-quickstart/SKILL.md",
+      "computedHash": "3eecb2a31397567464684439c7760dddc44b4886d214d8e8b65d19a36ac7f9a2"
+    },
+    "google-mobile-ads-android-migrate-to-next-gen": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-android-migrate-to-next-gen/SKILL.md",
+      "computedHash": "f98211e7d3806e31e003df2ab5f927c662620165d88a3379df4e0750a94740ea"
+    },
+    "google-mobile-ads-banner": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-banner/SKILL.md",
+      "computedHash": "0a62e4ed4fdd2f6a0500db9a8de13ab294690385756cd04147dc93af31d05d90"
+    },
+    "google-mobile-ads-get-started": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-get-started/SKILL.md",
+      "computedHash": "7a9da5ff663675d2ff52b4eb8a08a4ea525c84fbc2e1e400ce34c051600091d6"
+    },
+    "google-mobile-ads-interstitial": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-interstitial/SKILL.md",
+      "computedHash": "323ab671ce213b69f307ff63dd473e650458086df9d62c46b874c74106983e62"
+    },
+    "google-mobile-ads-rewarded": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-rewarded/SKILL.md",
+      "computedHash": "cace5343549e2399b0fb4124149eadb88c6cf6aa043c10c0ee5162a3593a83e2"
+    },
+    "google-mobile-ads-validate": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-validate/SKILL.md",
+      "computedHash": "40b81b462fb30b871738c0b93914e381d9bb350e05fcdddd034dbe387a352312"
+    },
+    "ima-dai-sdk": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/ima-dai-sdk/SKILL.md",
+      "computedHash": "76cb63e3d101067d00911ddc5c323188bf731760c49ca9d454cf71b8f21b147c"
+    },
+    "ima-sdk-client-side": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/ima-sdk-client-side/SKILL.md",
+      "computedHash": "016b6f8f012c47502170b2dc672fdf162cbdf7c71edc4d694d029900155363d9"
+    }
+  }
+}
